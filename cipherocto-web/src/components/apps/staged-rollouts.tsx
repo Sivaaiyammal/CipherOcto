@@ -32,14 +32,14 @@ function RolloutBar({ percent }: { percent: number }) {
         aria-valuenow={percent}
         aria-valuemin={0}
         aria-valuemax={100}
-        className="h-1.5 w-20 overflow-hidden rounded-full bg-neutral-strong"
+        className="h-1.5 w-16 overflow-hidden rounded-full bg-neutral-strong"
       >
         <div
           className="h-full rounded-full bg-stream-mrr transition-[width] duration-500"
           style={{ width: `${percent}%` }}
         />
       </div>
-      <span className="w-9 text-right text-xs font-bold text-foreground tabular-nums">
+      <span className={cn("w-9 text-right text-xs font-bold tabular-nums", percent < 100 ? "text-mint" : "text-foreground")}>
         {percent}%
       </span>
     </div>
@@ -63,8 +63,8 @@ export function StagedRollouts({
     .sort((a, b) => ORDER[a.status.kind] - ORDER[b.status.kind])
 
   return (
-    <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[var(--shadow-1)]">
-      <header className="flex items-start justify-between gap-3 p-5 lg:p-6">
+    <section className="@container/rollouts flex h-full min-w-0 flex-col justify-between gap-4 overflow-hidden rounded-[18px] bg-card p-5 shadow-[var(--shadow-1)] lg:p-6">
+      <header className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg leading-[26px] font-semibold tracking-[-0.01em] text-foreground">
             Fleet Staged Releases &amp; Rollouts
@@ -75,27 +75,27 @@ export function StagedRollouts({
         </div>
         <Button
           variant="ghost"
-          className="h-9 shrink-0 rounded-[10px] bg-neutral-strong px-3 text-[13px] font-semibold hover:bg-neutral-deep"
+          className="h-8 shrink-0 rounded-lg bg-foreground/[0.05] px-3 text-[13px] font-semibold hover:bg-foreground/[0.09]"
         >
           <HistoryIcon />
           Release History
         </Button>
       </header>
 
-      <Table className="min-w-[600px]">
-        <TableHeader className="bg-background">
-          <TableRow className="hover:bg-transparent">
+      <Table className="min-w-[560px]">
+        <TableHeader>
+          <TableRow className="border-0 bg-background hover:bg-background">
             {[
-              ["Application", "pl-5 lg:pl-6"],
-              ["Build", ""],
+              ["Application", "rounded-l-lg pl-3"],
+              ["Build", "hidden @[44rem]/rollouts:table-cell"],
               ["Rollout %", ""],
               ["Store Status", ""],
-              ["Actions", "pr-5 text-right lg:pr-6"],
+              ["Actions", "rounded-r-lg pr-3 text-right"],
             ].map(([label, cls]) => (
               <TableHead
                 key={label}
                 className={cn(
-                  "h-11 text-[11px] font-bold tracking-[0.04em] text-subtle-foreground uppercase",
+                  "h-10 text-[11px] font-bold tracking-[0.04em] text-subtle-foreground uppercase",
                   cls
                 )}
               >
@@ -109,8 +109,8 @@ export function StagedRollouts({
             const Icon = app.icon
             const { status } = app
             return (
-              <TableRow key={app.id} className="h-16 hover:bg-[#f8fafc]">
-                <TableCell className="pl-5 lg:pl-6">
+              <TableRow key={app.id} className="h-14 hover:bg-[#f8fafc]">
+                <TableCell className="pl-3">
                   <div className="flex items-center gap-2.5">
                     <span
                       className={cn(
@@ -120,12 +120,18 @@ export function StagedRollouts({
                     >
                       <Icon />
                     </span>
-                    <Link to={`/apps/${app.id}`} className="text-sm font-semibold text-foreground hover:underline">
-                      {app.name}
-                    </Link>
+                    <div className="min-w-0 leading-tight">
+                      <Link to={`/apps/${app.id}`} className="text-sm font-semibold text-foreground hover:underline">
+                        {app.name}
+                      </Link>
+                      {/* Build folds under the name when the Build column is hidden */}
+                      <p className="font-mono text-[11px] text-muted-foreground @[44rem]/rollouts:hidden">
+                        v{app.version} ({app.build})
+                      </p>
+                    </div>
                   </div>
                 </TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">
+                <TableCell className="hidden font-mono text-xs text-muted-foreground @[44rem]/rollouts:table-cell">
                   v{app.version} ({app.build})
                 </TableCell>
                 <TableCell>
@@ -151,15 +157,17 @@ export function StagedRollouts({
                         : storeReviewLabel(app)}
                   </span>
                 </TableCell>
-                <TableCell className="pr-5 text-right lg:pr-6">
+                <TableCell className="pr-3 text-right">
                   {status.kind === "staged" ? (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => onPromote(app)}
+                      title={`Promote to ${nextRolloutStep(status.rollout)}%`}
+                      aria-label={`Promote ${app.name} to ${nextRolloutStep(status.rollout)}%`}
                       className="h-8 rounded-lg px-2.5 text-xs font-bold text-mint hover:bg-mint-surface hover:text-mint"
                     >
-                      Promote to {nextRolloutStep(status.rollout)}%
+                      Promote
                       <ArrowRightIcon />
                     </Button>
                   ) : (
@@ -187,7 +195,7 @@ export function StagedRollouts({
         </TableBody>
       </Table>
 
-      <footer className="mt-auto flex flex-col gap-2 border-t border-border/70 px-5 py-3.5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between lg:px-6">
+      <footer className="flex flex-col gap-2 pt-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <span>
           Staged rollout rules conform to Apple Phased Release &amp; Google Play
           track policies.

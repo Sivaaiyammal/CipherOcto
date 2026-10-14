@@ -46,7 +46,7 @@ export function StorefrontIntegrations({ apps }: { apps: PortfolioApp[] }) {
       detail: `Key ID: #8K92F1A • ${pluralApps(appleApps)}`,
       status: "connected",
       icon: <SmartphoneIcon />,
-      iconClass: "bg-card text-foreground",
+      iconClass: "text-foreground",
     },
     {
       id: "play",
@@ -54,7 +54,7 @@ export function StorefrontIntegrations({ apps }: { apps: PortfolioApp[] }) {
       detail: `Pub/Sub Stream Live • ${pluralApps(playApps)}`,
       status: "connected",
       icon: <PlayIcon />,
-      iconClass: "bg-card text-mint",
+      iconClass: "text-mint",
     },
     {
       id: "stripe",
@@ -62,12 +62,12 @@ export function StorefrontIntegrations({ apps }: { apps: PortfolioApp[] }) {
       detail: "USD, EUR, GBP Multi-currency",
       status: "connected",
       icon: <span className="text-sm font-bold">S</span>,
-      iconClass: "bg-blue-hover text-tertiary",
+      iconClass: "text-lavender",
     },
   ]
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-card p-5 shadow-[var(--shadow-1)] lg:p-6">
+    <section className="flex h-full flex-col justify-between gap-4 rounded-[18px] bg-card p-5 shadow-[var(--shadow-1)] lg:p-6">
       <header className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg leading-[26px] font-semibold tracking-[-0.01em] text-foreground">
@@ -77,7 +77,7 @@ export function StorefrontIntegrations({ apps }: { apps: PortfolioApp[] }) {
             Real-time status of multi-tenant app store APIs and webhook listeners.
           </p>
         </div>
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-mint-surface text-mint">
+        <span title="All systems nominal" className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-foreground/[0.04] text-mint">
           <ShieldCheckIcon className="size-4.5" />
         </span>
       </header>
@@ -88,11 +88,11 @@ export function StorefrontIntegrations({ apps }: { apps: PortfolioApp[] }) {
           return (
             <li
               key={item.id}
-              className="flex items-start gap-3 rounded-xl bg-background p-3"
+              className="flex items-center gap-3 rounded-xl bg-background p-3"
             >
               <span
                 className={cn(
-                  "flex size-10 shrink-0 items-center justify-center rounded-[10px] shadow-[0_0_0_1px_var(--border)] [&_svg]:size-4.5",
+                  "flex size-10 shrink-0 items-center justify-center rounded-xl bg-foreground/[0.05] [&_svg]:size-4.5",
                   item.iconClass
                 )}
               >
@@ -101,16 +101,15 @@ export function StorefrontIntegrations({ apps }: { apps: PortfolioApp[] }) {
               <div className="min-w-0 flex-1 leading-tight">
                 <p className="text-sm font-semibold text-foreground">{item.name}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
-                <span
-                  className={cn(
-                    "mt-1.5 inline-flex h-5.5 items-center gap-1.5 rounded-full px-2 text-[11px] font-bold",
-                    pill.className
-                  )}
-                >
-                  <span className="size-1.5 rounded-full bg-current" />
-                  {pill.label}
-                </span>
               </div>
+              <span
+                className={cn(
+                  "inline-flex h-6 shrink-0 items-center rounded-full px-2 text-[11px] font-bold",
+                  pill.className
+                )}
+              >
+                {pill.label}
+              </span>
               <Button
                 variant="ghost"
                 size="icon"
@@ -126,7 +125,7 @@ export function StorefrontIntegrations({ apps }: { apps: PortfolioApp[] }) {
 
       <footer className="mt-auto flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <span>Security audit verified yesterday at 18:40 UTC</span>
-        <a href="#" className="font-semibold text-mint hover:underline">
+        <a href="#" className="font-bold text-mint hover:underline">
           Manage Keys
         </a>
       </footer>

@@ -4,9 +4,11 @@ import {
   BanknoteIcon,
   LayoutGridIcon,
   StarIcon,
+  TrendingUpIcon,
   UsersIcon,
 } from "lucide-react"
 
+import { getAppDetail } from "@/data/app-details"
 import { APP_QUOTA, type PortfolioApp } from "@/data/apps"
 import { formatCompact, formatCompactUsd } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -16,15 +18,15 @@ type Tone = "indigo" | "mint" | "stone" | "blue" | "pink"
 const TONES: Record<Tone, { tile: string; title: string; badge: string; pill: string }> = {
   indigo: {
     tile: "bg-blue-surface",
-    title: "text-foreground",
+    title: "text-tertiary",
     badge: "bg-blue-hover text-tertiary",
     pill: "bg-blue-hover text-tertiary",
   },
   mint: {
-    tile: "bg-mint-hover",
+    tile: "bg-mint-surface",
     title: "text-mint",
-    badge: "bg-mint-border/70 text-mint",
-    pill: "bg-mint-border/70 text-mint",
+    badge: "bg-mint-hover text-mint",
+    pill: "bg-mint-hover text-mint",
   },
   stone: {
     tile: "bg-neutral-strong",
@@ -33,10 +35,10 @@ const TONES: Record<Tone, { tile: string; title: string; badge: string; pill: st
     pill: "bg-card/70 text-foreground",
   },
   blue: {
-    tile: "bg-blue-surface",
-    title: "text-tertiary",
-    badge: "bg-blue-hover text-tertiary",
-    pill: "bg-blue-hover text-tertiary",
+    tile: "bg-lavender-surface",
+    title: "text-lavender",
+    badge: "bg-lavender-hover text-lavender",
+    pill: "bg-lavender-hover text-lavender",
   },
   pink: {
     tile: "bg-pink-surface",
@@ -53,7 +55,8 @@ function SummaryTile({
   tone,
   value,
   unit,
-  children,
+  pill,
+  caption,
 }: {
   title: string
   subtitle: string
@@ -61,14 +64,20 @@ function SummaryTile({
   tone: Tone
   value: React.ReactNode
   unit?: React.ReactNode
-  children: React.ReactNode
+  pill: React.ReactNode
+  caption: React.ReactNode
 }) {
   const t = TONES[tone]
   return (
-    <article className={cn("@container/tile flex min-w-0 flex-col gap-3 rounded-2xl p-4", t.tile)}>
+    <article
+      className={cn(
+        "@container/tile flex min-h-[148px] min-w-0 flex-col justify-between gap-2 rounded-2xl p-4 shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-2)]",
+        t.tile
+      )}
+    >
       <header className="flex items-start justify-between gap-2">
         <div className="min-w-0 leading-tight">
-          <h3 className={cn("truncate text-[15px] font-semibold", t.title)}>{title}</h3>
+          <h3 className={cn("truncate text-[13px] font-semibold tracking-[0.01em]", t.title)}>{title}</h3>
           <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
         </div>
         <span
@@ -80,31 +89,24 @@ function SummaryTile({
           {icon}
         </span>
       </header>
-      <p className="flex items-baseline gap-1.5 text-2xl leading-9 font-bold tracking-[-0.02em] text-foreground tabular-nums @[11rem]/tile:text-[28px]">
+      <p className="flex items-baseline gap-1.5 text-[28px] leading-[38px] font-bold tracking-[-0.02em] text-foreground tabular-nums @[12rem]/tile:text-[32px]">
         {value}
         {unit && (
-          <span className="text-xs font-medium tracking-normal text-muted-foreground">
-            {unit}
-          </span>
+          <span className="text-sm font-normal tracking-normal text-muted-foreground">{unit}</span>
         )}
       </p>
-      <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-        {children}
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-1">
+        <span
+          className={cn(
+            "inline-flex h-6 items-center gap-0.5 rounded-full px-2 text-[11px] font-bold whitespace-nowrap tabular-nums [&_svg]:size-3",
+            t.pill
+          )}
+        >
+          {pill}
+        </span>
+        <span className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">{caption}</span>
       </div>
     </article>
-  )
-}
-
-function Pill({ tone, children }: { tone: Tone; children: React.ReactNode }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex h-6 items-center rounded-full px-2.5 text-[11px] font-bold tabular-nums",
-        TONES[tone].pill
-      )}
-    >
-      {children}
-    </span>
   )
 }
 
@@ -137,7 +139,7 @@ export function AppsSummary({ apps }: { apps: PortfolioApp[] }) {
       mau,
       installs: sum((a) => a.installs30d),
       revenue,
-      subscribers,
+      mrr: sum((a) => getAppDetail(a).mrr),
       arppu: subscribers ? revenue / subscribers : 0,
       // Weighted so large apps dominate, as they do in practice
       crashFree: mau ? sum((a) => a.crashFree * a.mau) / mau : 0,
@@ -161,23 +163,24 @@ export function AppsSummary({ apps }: { apps: PortfolioApp[] }) {
         tone="indigo"
         value={totals.count}
         unit={`/ ${APP_QUOTA} Quota`}
-      >
-        <Pill tone="indigo">{quotaUsed}% Used</Pill>
-        {APP_QUOTA - totals.count} slots free
-      </SummaryTile>
-
+        pill={`${quotaUsed}% Used`}
+        caption={`${APP_QUOTA - totals.count} slots free`}
+      />
       <SummaryTile
         title="Global Audience"
         subtitle="30-day aggregated"
         icon={<UsersIcon />}
         tone="mint"
         value={formatCompact(totals.mau)}
-        unit="MAU"
-      >
-        <Pill tone="mint">+14.2% MoM</Pill>
-        {formatCompact(totals.installs)} installs
-      </SummaryTile>
-
+        unit={<span className="font-semibold text-mint">MAU</span>}
+        pill={
+          <>
+            <TrendingUpIcon />
+            +14.2% MoM
+          </>
+        }
+        caption={`${formatCompact(totals.installs)} installs`}
+      />
       <SummaryTile
         title="Gross Revenue"
         subtitle="Blended MRR + IAP"
@@ -185,45 +188,28 @@ export function AppsSummary({ apps }: { apps: PortfolioApp[] }) {
         tone="stone"
         value={formatCompactUsd(totals.revenue)}
         unit="/mo"
-      >
-        <span className="rounded-lg bg-card/70 px-2 py-1 leading-tight">
-          <strong className="block font-bold text-foreground tabular-nums">
-            ${totals.arppu.toFixed(2)}
-          </strong>
-          ARPPU
-        </span>
-        <span className="rounded-lg bg-card/70 px-2 py-1 leading-tight">
-          <strong className="block font-bold text-foreground tabular-nums">
-            {formatCompact(totals.subscribers)}
-          </strong>
-          Paying users
-        </span>
-      </SummaryTile>
-
+        pill={`$${totals.arppu.toFixed(2)} ARPPU`}
+        caption={<span className="font-medium">MRR {formatCompactUsd(totals.mrr)}</span>}
+      />
       <SummaryTile
         title="Fleet Reliability"
-        subtitle="Crash-free sessions"
+        subtitle="Crash telemetry"
         icon={<ActivityIcon />}
         tone="blue"
         value={`${totals.crashFree.toFixed(2)}%`}
-      >
-        <Pill tone="blue">
-          {totals.rollouts} Rollout{totals.rollouts === 1 ? "" : "s"}
-        </Pill>
-        0 outages
-      </SummaryTile>
-
+        pill={`${totals.rollouts} Rollout${totals.rollouts === 1 ? "" : "s"}`}
+        caption="0 outages"
+      />
       <SummaryTile
         title="Store Reputation"
         subtitle={`${formatCompact(totals.ratingCount)} verified ratings`}
-        icon={<StarIcon />}
+        icon={<StarIcon className="fill-current" />}
         tone="pink"
         value={totals.rating.toFixed(2)}
         unit={<Stars rating={totals.rating} />}
-      >
-        <Pill tone="pink">+0.12 QoQ</Pill>
-        iOS &amp; Android
-      </SummaryTile>
+        pill="+0.12 QoQ"
+        caption="iOS & Android"
+      />
     </section>
   )
 }
