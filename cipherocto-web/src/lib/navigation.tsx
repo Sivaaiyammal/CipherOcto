@@ -42,7 +42,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Revenue & Finance", url: "/finance", icon: BanknoteIcon, group: "Business", pageTitle: "Revenue & Finance" },
   { title: "Analytics", url: "/analytics", icon: ChartSplineIcon, group: "Business", pageTitle: "Analytics & Product Intelligence" },
   { title: "Projects & Tasks", url: "/projects", icon: ListChecksIcon, group: "Workspace", pageTitle: "Projects & Tasks" },
-  { title: "Team Management", url: "/team", icon: UsersIcon, group: "Workspace" },
+  { title: "Team Management", url: "/team", icon: UsersIcon, group: "Workspace", pageTitle: "Team Management & Access Control" },
   { title: "Releases", url: "/releases", icon: RocketIcon, group: "Platform" },
   { title: "Integrations", url: "/integrations", icon: NetworkIcon, group: "Platform" },
   { title: "Settings", url: "/settings", icon: SettingsIcon, group: "Workspace" },

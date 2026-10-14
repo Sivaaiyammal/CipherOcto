@@ -15,6 +15,7 @@ import FinancePage from '@/pages/finance'
 import LoginPage from '@/pages/login'
 import PlaceholderPage from '@/pages/placeholder'
 import RemoteConfigPage from '@/pages/remote-config'
+import TeamPage from '@/pages/team'
 import SubscriptionsPage from '@/pages/subscriptions'
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
                   <Route path="finance" element={<FinancePage />} />
                   <Route path="analytics" element={<AnalyticsPage />} />
                   <Route path="projects" element={<ProjectsPage />} />
+                  <Route path="team" element={<TeamPage />} />
                   <Route path="*" element={<PlaceholderPage />} />
                 </Route>
               </Route>
