@@ -3,9 +3,11 @@ import { Link } from "react-router-dom"
 
 import { CipherOctoLogo } from "@/components/cipherocto-logo"
 import { NavMain } from "@/components/nav-main"
+import { SidebarOrgFooter } from "@/components/sidebar-org-footer"
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar"
@@ -42,6 +44,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={NAV_ITEMS} />
       </SidebarContent>
+      <SidebarFooter className="px-1 pb-3">
+        <SidebarOrgFooter />
+      </SidebarFooter>
     </Sidebar>
   )
 }

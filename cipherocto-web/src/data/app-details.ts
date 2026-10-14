@@ -188,8 +188,7 @@ export function getScopedFlags(app: PortfolioApp): ScopedFlag[] {
     },
     { key: "onboarding_v4_paywall", description: "A/B Test active (50/50 split)", enabled: true },
     { key: "haptic_feedback_engine", description: "Global 100% rollout", enabled: true },
-    { key: "black_friday_precache", description: "Scheduled • Nov 24, 00:00 UTC", enabled: false },
-    { key: "legacy_sync_fallback", description: "Kill switch • 0% allocation", enabled: false },
+    { key: "black_friday_precache", description: "Armed for Nov 24, 00:00 UTC", enabled: false },
   ]
   return flags.slice(0, Math.min(flags.length, app.configFlags))
 }

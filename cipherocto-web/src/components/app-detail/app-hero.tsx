@@ -71,7 +71,10 @@ export function AppHero({ app, detail }: { app: PortfolioApp; detail: AppDetail 
             Live Sandbox Webhooks
           </dt>
           <dd className="mt-1.5 flex items-center gap-1.5 font-semibold text-mint">
-            <span className="size-1.5 rounded-full bg-mint" />
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex size-full rounded-full bg-mint opacity-60 motion-safe:animate-ping" />
+              <span className="relative inline-flex size-2 rounded-full bg-mint" />
+            </span>
             Connected ({detail.webhookLatency}s avg)
           </dd>
           <dd className="mt-0.5 text-muted-foreground">Last handshake: {detail.lastHandshake}</dd>

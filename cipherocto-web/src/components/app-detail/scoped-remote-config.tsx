@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Link } from "react-router-dom"
-import { ArrowRightIcon, SlidersHorizontalIcon } from "lucide-react"
+import { ListFilterIcon, ToggleRightIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -18,7 +18,7 @@ export function ScopedRemoteConfig({ app }: { app: PortfolioApp }) {
       <header className="flex items-start justify-between gap-2">
         <div>
           <h2 className="flex items-center gap-2 text-lg leading-[26px] font-semibold tracking-[-0.01em] text-foreground">
-            <SlidersHorizontalIcon className="size-4.5 text-muted-foreground" />
+            <ToggleRightIcon className="size-4.5 text-mint" />
             Scoped Remote Config
           </h2>
           <p className="mt-0.5 text-[13px] text-muted-foreground">
@@ -29,7 +29,7 @@ export function ScopedRemoteConfig({ app }: { app: PortfolioApp }) {
           to={`/remote-config?app=${app.id}`}
           className="shrink-0 text-xs font-semibold text-mint hover:underline"
         >
-          All {app.configFlags} Flags
+          All {app.configFlags} Flags →
         </Link>
       </header>
 
@@ -55,10 +55,14 @@ export function ScopedRemoteConfig({ app }: { app: PortfolioApp }) {
         })}
       </ul>
 
-      <Button asChild variant="outline" className="mt-auto h-10 rounded-xl text-[13px] font-semibold">
-        <Link to={`/remote-config?app=${app.id}`}>
-          Open Remote Config
-          <ArrowRightIcon />
+      <Button
+        asChild
+        variant="ghost"
+        className="h-10 rounded-xl bg-foreground/[0.04] text-[13px] font-semibold hover:bg-foreground/[0.08]"
+      >
+        <Link to={`/remote-config?app=${app.id}&tab=targeting`}>
+          <ListFilterIcon />
+          Manage Audience Targeting Rules
         </Link>
       </Button>
     </section>

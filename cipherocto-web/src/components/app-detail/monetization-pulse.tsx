@@ -1,10 +1,9 @@
 import * as React from "react"
 import {
+  Area,
   Bar,
   CartesianGrid,
-  Cell,
   ComposedChart,
-  Line,
   ReferenceLine,
   XAxis,
   YAxis,
@@ -33,15 +32,47 @@ const METRICS: { value: PulseMetric; label: string; unit: string }[] = [
 ]
 
 const chartConfig = {
-  value: { label: "Daily", color: "var(--stream-mrr)" },
+  ios: { label: "App Store", color: "var(--stream-mrr)" },
+  android: { label: "Google Play", color: "var(--stream-iap)" },
   trend: { label: "7-day avg", color: "var(--primary)" },
 } satisfies ChartConfig
 
+/** Pill-shaped release annotation drawn inside the chart's top margin. */
+function ReleaseCallout({
+  viewBox,
+  text,
+  alignRight,
+}: {
+  viewBox?: { x?: number; y?: number }
+  text: string
+  alignRight: boolean
+}) {
+  const x = viewBox?.x ?? 0
+  const y = (viewBox?.y ?? 0) - 30
+  const width = text.length * 6.1 + 26
+  const left = alignRight ? x - width + 8 : x - 8
+  return (
+    <g>
+      <rect x={left} y={y} width={width} height={22} rx={11} className="fill-card" stroke="var(--border)" />
+      <circle cx={left + 12} cy={y + 11} r={3.5} className="fill-stream-mrr" />
+      <text x={left + 21} y={y + 15} className="fill-foreground text-[11px] font-semibold">
+        {text}
+      </text>
+    </g>
+  )
+}
+
 export function MonetizationPulse({ app, detail }: { app: PortfolioApp; detail: AppDetail }) {
   const [metric, setMetric] = React.useState<PulseMetric>("revenue")
+  const iosShare = detail.iosShare / 100
   const data = React.useMemo(
-    () => getPulseSeries(app, metric, detail.releaseDaysAgo),
-    [app, metric, detail.releaseDaysAgo]
+    () =>
+      getPulseSeries(app, metric, detail.releaseDaysAgo).map((p) => ({
+        ...p,
+        ios: p.value * iosShare,
+        android: p.value * (1 - iosShare),
+      })),
+    [app, metric, detail.releaseDaysAgo, iosShare]
   )
 
   const fmt = (v: number) => (metric === "revenue" ? usd.format(v) : integer.format(Math.round(v)))
@@ -55,8 +86,10 @@ export function MonetizationPulse({ app, detail }: { app: PortfolioApp; detail: 
     const releaseIdx = data.findIndex((p) => p.isRelease)
     const before = avg(data.slice(Math.max(0, releaseIdx - 7), releaseIdx))
     const after = avg(data.slice(releaseIdx))
+    const total = data.reduce((s, p) => s + p.value, 0)
     return {
       peak,
+      total,
       weekendVelocity: (weekend / weekday - 1) * 100,
       releaseLift: before ? (after / before - 1) * 100 : 0,
       release: data[releaseIdx],
@@ -71,10 +104,12 @@ export function MonetizationPulse({ app, detail }: { app: PortfolioApp; detail: 
       : metric === "installs"
         ? {
             label: "Avg Daily Installs",
-            value: integer.format(Math.round(data.reduce((s, p) => s + p.value, 0) / data.length)),
+            value: integer.format(Math.round(stats.total / data.length)),
             note: "last 30 days",
           }
         : { label: "Trial → Paid", value: `${detail.trialToPaid}%`, note: `Variant ${detail.paywallVariant}` }
+
+  const hasBoth = detail.iosShare > 0 && detail.iosShare < 100
 
   return (
     <section className="flex min-w-0 flex-col gap-5 rounded-2xl border border-border/60 bg-card p-5 shadow-[var(--shadow-1)] lg:p-6">
@@ -140,14 +175,20 @@ export function MonetizationPulse({ app, detail }: { app: PortfolioApp; detail: 
           </dt>
           <dd className="mt-1 text-lg font-bold text-foreground tabular-nums">
             {thirdStat.value}{" "}
-            <span className="text-xs font-medium text-muted-foreground">({thirdStat.note})</span>
+            <span className="text-xs font-semibold text-mint">({thirdStat.note})</span>
           </dd>
         </div>
       </dl>
 
       <ChartContainer config={chartConfig} className="aspect-auto h-72 w-full">
-        <ComposedChart data={data} margin={{ top: 36, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid vertical={false} stroke="var(--border)" />
+        <ComposedChart data={data} margin={{ top: 40, right: 8, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id={`pulse-${app.id}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--mint-border)" stopOpacity={0.55} />
+              <stop offset="100%" stopColor="var(--mint-border)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
           <XAxis
             dataKey="label"
             tickLine={false}
@@ -163,7 +204,7 @@ export function MonetizationPulse({ app, detail }: { app: PortfolioApp; detail: 
                 formatter={(value, name) => (
                   <div className="flex w-full justify-between gap-4">
                     <span className="text-muted-foreground">
-                      {name === "trend" ? "7-day avg" : "Daily"}
+                      {chartConfig[name as keyof typeof chartConfig]?.label ?? name}
                     </span>
                     <span className="font-bold tabular-nums">{fmt(Number(value))}</span>
                   </div>
@@ -171,42 +212,71 @@ export function MonetizationPulse({ app, detail }: { app: PortfolioApp; detail: 
               />
             }
           />
+          <Area
+            dataKey="trend"
+            type="monotone"
+            stroke="var(--color-trend)"
+            strokeWidth={2.5}
+            fill={`url(#pulse-${app.id})`}
+            dot={false}
+            activeDot={{ r: 4 }}
+          />
+          {detail.iosShare > 0 && (
+            <Bar dataKey="ios" stackId="platform" fill="var(--color-ios)" maxBarSize={14} />
+          )}
+          {detail.iosShare < 100 && (
+            <Bar
+              dataKey="android"
+              stackId="platform"
+              fill="var(--color-android)"
+              radius={[3, 3, 0, 0]}
+              maxBarSize={14}
+            />
+          )}
           {stats.release && (
             <ReferenceLine
               x={stats.release.label}
               stroke="var(--primary)"
               strokeDasharray="4 4"
-              label={{
-                value: `${stats.release.label}: v${app.version} release (${formatSignedPercent(stats.releaseLift)} lift)`,
-                position: stats.labelOnLeft ? "insideTopRight" : "insideTopLeft",
-                offset: 0,
-                dy: -28,
-                className: "fill-foreground text-[11px] font-semibold",
-              }}
+              label={
+                <ReleaseCallout
+                  alignRight={stats.labelOnLeft}
+                  text={`${stats.release.label}: v${app.version} rollout (${formatSignedPercent(stats.releaseLift)} lift)`}
+                />
+              }
             />
           )}
-          <Bar dataKey="value" radius={[3, 3, 0, 0]} maxBarSize={14}>
-            {data.map((p) => (
-              <Cell
-                key={p.label}
-                fill={
-                  data.indexOf(p) >= data.findIndex((d) => d.isRelease)
-                    ? "var(--stream-mrr)"
-                    : "var(--stream-mrr-soft)"
-                }
-              />
-            ))}
-          </Bar>
-          <Line
-            dataKey="trend"
-            type="monotone"
-            stroke="var(--color-trend)"
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 4 }}
-          />
         </ComposedChart>
       </ChartContainer>
+
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          {detail.iosShare > 0 && (
+            <span className="flex items-center gap-1.5 font-semibold text-foreground">
+              <span className="size-2.5 rounded-full bg-stream-mrr" />
+              Apple App Store:{" "}
+              <strong className="tabular-nums">
+                {detail.iosShare}% ({fmt(stats.total * iosShare)})
+              </strong>
+            </span>
+          )}
+          {detail.iosShare < 100 && (
+            <span className="flex items-center gap-1.5 font-semibold text-muted-foreground">
+              <span className="size-2.5 rounded-full bg-stream-iap" />
+              Google Play Store:{" "}
+              <strong className="text-foreground tabular-nums">
+                {100 - detail.iosShare}% ({fmt(stats.total * (1 - iosShare))})
+              </strong>
+            </span>
+          )}
+        </div>
+        {hasBoth && (
+          <div className="flex h-2 overflow-hidden rounded-full bg-neutral-strong">
+            <div className="h-full bg-stream-mrr" style={{ width: `${detail.iosShare}%` }} />
+            <div className="h-full bg-stream-iap" style={{ width: `${100 - detail.iosShare}%` }} />
+          </div>
+        )}
+      </div>
     </section>
   )
 }

@@ -18,7 +18,16 @@ export type KpiTone =
 // (DESIGN.md › Pastel Semantic Tiles).
 const TONES: Record<
   KpiTone,
-  { tile: string; title: string; badge: string; pill: string; line: string }
+  {
+    tile: string
+    title: string
+    badge: string
+    pill: string
+    line: string
+    /** Compact variant: lighter surface and tone-colored title */
+    softTile: string
+    accent: string
+  }
 > = {
   mint: {
     tile: "bg-mint-hover",
@@ -26,6 +35,8 @@ const TONES: Record<
     badge: "bg-mint-border/70 text-mint",
     pill: "bg-mint-border/70 text-mint",
     line: "var(--mint)",
+    softTile: "bg-mint-surface",
+    accent: "text-mint",
   },
   indigo: {
     tile: "bg-blue-surface",
@@ -33,6 +44,8 @@ const TONES: Record<
     badge: "bg-blue-hover text-tertiary",
     pill: "bg-blue-hover text-tertiary",
     line: "color-mix(in oklab, var(--tertiary) 55%, white)",
+    softTile: "bg-blue-surface",
+    accent: "text-tertiary",
   },
   stone: {
     tile: "bg-neutral-strong",
@@ -40,6 +53,8 @@ const TONES: Record<
     badge: "bg-card/70 text-foreground",
     pill: "bg-card/70 text-foreground",
     line: "var(--foreground)",
+    softTile: "bg-neutral-strong",
+    accent: "text-foreground",
   },
   "stone-deep": {
     tile: "bg-neutral-deep",
@@ -47,6 +62,8 @@ const TONES: Record<
     badge: "bg-card/60 text-foreground",
     pill: "bg-card/60 text-foreground",
     line: "color-mix(in oklab, var(--foreground) 70%, transparent)",
+    softTile: "bg-neutral-deep",
+    accent: "text-foreground",
   },
   blue: {
     tile: "bg-blue-surface",
@@ -54,6 +71,8 @@ const TONES: Record<
     badge: "bg-blue-hover text-tertiary",
     pill: "bg-blue-hover text-tertiary",
     line: "var(--tertiary)",
+    softTile: "bg-blue-surface",
+    accent: "text-tertiary",
   },
   lavender: {
     tile: "bg-lavender-surface",
@@ -61,13 +80,17 @@ const TONES: Record<
     badge: "bg-lavender-hover text-lavender",
     pill: "bg-lavender-hover text-lavender",
     line: "var(--lavender)",
+    softTile: "bg-lavender-surface",
+    accent: "text-lavender",
   },
   amber: {
     tile: "bg-amber-surface",
     title: "text-foreground",
-    badge: "bg-amber-border/60 text-amber",
-    pill: "bg-amber-border/60 text-amber",
+    badge: "bg-amber-hover text-amber",
+    pill: "bg-amber-hover text-amber",
     line: "var(--amber)",
+    softTile: "bg-amber-surface",
+    accent: "text-amber",
   },
   pink: {
     tile: "bg-pink-surface",
@@ -75,6 +98,8 @@ const TONES: Record<
     badge: "bg-pink-hover text-pink",
     pill: "bg-pink-hover text-pink",
     line: "var(--pink)",
+    softTile: "bg-pink-surface",
+    accent: "text-pink",
   },
 }
 
@@ -196,6 +221,114 @@ export function KpiCard({
           </span>
         ))}
       </footer>
+    </article>
+  )
+}
+
+/** Small inline sparkline (no axes) for the compact card's pill row. */
+function MiniSparkline({ points, color }: { points: number[]; color: string }) {
+  if (points.length < 2) return null
+  const min = Math.min(...points)
+  const max = Math.max(...points)
+  const span = max - min || 1
+  const d = points
+    .map((v, i) => {
+      const x = 2 + (i / (points.length - 1)) * 56
+      const y = 18 - ((v - min) / span) * 16
+      return `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`
+    })
+    .join(" ")
+  return (
+    <svg viewBox="0 0 60 20" preserveAspectRatio="none" className="h-6 w-11 shrink-0 @[13rem]/kpi:w-16" fill="none" aria-hidden="true">
+      <path d={d} stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export type KpiCardCompactProps = Omit<KpiCardProps, "caption" | "children"> & {
+  /** Right side of the pill row when there is no trend, e.g. "Variant V4" */
+  aside?: React.ReactNode
+}
+
+/**
+ * Denser KPI tile: tone-colored title, inline sparkline beside the delta pill,
+ * and a single-row breakdown. Used on the app detail page.
+ */
+export function KpiCardCompact({
+  title,
+  value,
+  unit,
+  icon,
+  tone,
+  delta,
+  trend,
+  aside,
+  breakdown,
+}: KpiCardCompactProps) {
+  const t = TONES[tone]
+  return (
+    <article
+      className={cn(
+        "@container/kpi flex min-w-0 flex-col justify-between gap-4 rounded-2xl p-4 shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-200 hover:-translate-y-px hover:shadow-[var(--shadow-2)]",
+        t.softTile
+      )}
+    >
+      <div>
+        <header className="flex items-center justify-between gap-2">
+          <h3 className={cn("text-[13px] leading-[18px] font-semibold tracking-[0.01em]", t.accent)}>
+            {title}
+          </h3>
+          <span
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center rounded-full [&_svg]:size-4",
+              t.badge
+            )}
+          >
+            {icon}
+          </span>
+        </header>
+        <p className="mt-2 text-[28px] leading-[38px] font-bold tracking-[-0.02em] text-foreground tabular-nums @[13rem]/kpi:text-[32px]">
+          {value}
+          {unit && (
+            <span className="ml-1 text-sm font-normal tracking-normal text-muted-foreground">{unit}</span>
+          )}
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+          <span
+            className={cn(
+              "inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-bold whitespace-nowrap tabular-nums [&_svg]:size-3",
+              t.pill
+            )}
+          >
+            {delta.icon}
+            {delta.label}
+          </span>
+          {trend ? (
+            <MiniSparkline points={trend} color={t.line} />
+          ) : (
+            aside && (
+              <span className={cn("shrink-0 text-[11px] font-bold whitespace-nowrap tabular-nums", t.accent)}>
+                {aside}
+              </span>
+            )
+          )}
+        </div>
+        {/* Label over value in equal columns so nothing truncates in narrow tiles */}
+        <dl
+          className="grid gap-2 border-t border-foreground/[0.06] pt-2 text-[11px] tabular-nums"
+          style={{ gridTemplateColumns: `repeat(${breakdown.length}, minmax(0, 1fr))` }}
+        >
+          {breakdown.map((item) => (
+            <div key={item.label} className="min-w-0 leading-tight">
+              <dt className="text-muted-foreground">{item.label}</dt>
+              <dd className="mt-0.5 font-semibold whitespace-nowrap text-foreground">{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </article>
   )
 }
