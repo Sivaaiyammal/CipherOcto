@@ -1,8 +1,6 @@
 import type { CSSProperties } from "react"
 
 import { AppSidebar } from "@/components/app-sidebar"
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
 import { AbExperimentCard } from "@/components/dashboard/ab-experiment-card"
 import { ActivityStream } from "@/components/dashboard/activity-stream"
 import { AppsPortfolio } from "@/components/dashboard/apps-portfolio"
@@ -14,8 +12,6 @@ import { RevenueOverview } from "@/components/dashboard/revenue-overview"
 import { WelcomeBanner } from "@/components/dashboard/welcome-banner"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-
-import data from "./data.json"
 
 export default function DashboardPage() {
   return (
@@ -53,8 +49,6 @@ export default function DashboardPage() {
                 <QuickRemoteFlags />
                 <AbExperimentCard />
               </div>
-              <ChartAreaInteractive />
-              <DataTable data={data} />
             </div>
           </div>
         </div>
