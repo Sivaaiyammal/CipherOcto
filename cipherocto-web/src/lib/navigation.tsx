@@ -38,7 +38,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: SlidersHorizontalIcon,
     group: "Platform",
   },
-  { title: "Subscriptions", url: "/subscriptions", icon: TagIcon, group: "Platform" },
+  { title: "Subscriptions", url: "/subscriptions", icon: TagIcon, group: "Platform", pageTitle: "Subscriptions & In-App Purchases" },
   { title: "Revenue & Finance", url: "/finance", icon: BanknoteIcon, group: "Business" },
   { title: "Analytics", url: "/analytics", icon: ChartSplineIcon, group: "Business" },
   { title: "Projects & Tasks", url: "/projects", icon: ListChecksIcon, group: "Workspace" },
