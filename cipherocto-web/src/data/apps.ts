@@ -53,6 +53,8 @@ export type PortfolioApp = {
   ratingCount: number
   integrations: string[]
   configFlags: number
+  /** Finished a staged rollout recently; still shown in the rollout tracker */
+  recentlyReleased?: boolean
 }
 
 export const APP_QUOTA = 12
@@ -80,6 +82,7 @@ export const APPS: PortfolioApp[] = [
     ratingCount: 84_200,
     integrations: ["StoreKit 2.0", "Play RTDN"],
     configFlags: 18,
+    recentlyReleased: true,
   },
   {
     id: "focuspulse",

@@ -13,6 +13,8 @@ import { AppCard } from "@/components/apps/app-card"
 import { AppsListView } from "@/components/apps/apps-list-view"
 import { AppsSummary } from "@/components/apps/apps-summary"
 import { RegisterAppCard } from "@/components/apps/register-app-card"
+import { StagedRollouts } from "@/components/apps/staged-rollouts"
+import { StorefrontIntegrations } from "@/components/apps/storefront-integrations"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -66,7 +68,9 @@ export default function AppsPage() {
       prev.map((a) => {
         if (a.id !== target.id || a.status.kind !== "staged") return a
         const next = nextRolloutStep(a.status.rollout)
-        return { ...a, status: next >= 100 ? { kind: "live" } : { kind: "staged", rollout: next } }
+        return next >= 100
+          ? { ...a, status: { kind: "live" }, recentlyReleased: true }
+          : { ...a, status: { kind: "staged", rollout: next } }
       })
     )
 
@@ -220,6 +224,13 @@ export default function AppsPage() {
           <AppsListView apps={visible} />
         )}
       </section>
+
+      <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @5xl/main:grid-cols-3">
+        <StorefrontIntegrations apps={apps} />
+        <div className="min-w-0 @5xl/main:col-span-2">
+          <StagedRollouts apps={apps} onPromote={promote} />
+        </div>
+      </div>
     </>
   )
 }
