@@ -5,6 +5,7 @@ import { AppLayout } from '@/components/layout/app-layout'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppsProvider } from '@/data/apps-provider'
 import { AuthProvider } from '@/data/auth-provider'
+import AnalyticsPage from '@/pages/analytics'
 import AppDetailPage from '@/pages/apps/app-detail'
 import AppsPage from '@/pages/apps'
 import RegisterAppPage from '@/pages/apps/register'
@@ -32,6 +33,7 @@ function App() {
                   <Route path="remote-config" element={<RemoteConfigPage />} />
                   <Route path="subscriptions" element={<SubscriptionsPage />} />
                   <Route path="finance" element={<FinancePage />} />
+                  <Route path="analytics" element={<AnalyticsPage />} />
                   <Route path="*" element={<PlaceholderPage />} />
                 </Route>
               </Route>
