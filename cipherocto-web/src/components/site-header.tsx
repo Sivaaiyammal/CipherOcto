@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link, useLocation, useMatch } from "react-router-dom"
+import { Link, useLocation, useMatch, useNavigate } from "react-router-dom"
 import {
   BellIcon,
   CalendarIcon,
@@ -35,6 +35,7 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { currentUser } from "@/lib/current-user"
 import { useApps } from "@/data/apps-context"
+import { useAuth } from "@/data/auth-context"
 import { findNavItem } from "@/lib/navigation"
 
 const DATE_PRESETS = [
@@ -169,6 +170,9 @@ function Notifications({ hasUnread = true }: { hasUnread?: boolean }) {
 }
 
 function UserMenu() {
+  const { session, signOut } = useAuth()
+  const navigate = useNavigate()
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -196,7 +200,7 @@ function UserMenu() {
       <DropdownMenuContent align="end" className="min-w-56">
         <DropdownMenuLabel className="font-normal">
           <div className="text-sm font-semibold">{currentUser.name}</div>
-          <div className="text-xs text-muted-foreground">{currentUser.role}</div>
+          <div className="text-xs text-muted-foreground">{session?.email ?? currentUser.role}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
@@ -204,13 +208,20 @@ function UserMenu() {
             <CircleUserRoundIcon />
             Profile
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <SettingsIcon />
-            Settings
+          <DropdownMenuItem asChild>
+            <Link to="/settings">
+              <SettingsIcon />
+              Settings
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => {
+            signOut()
+            navigate("/login", { replace: true })
+          }}
+        >
           <LogOutIcon />
           Log out
         </DropdownMenuItem>
