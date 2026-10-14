@@ -59,7 +59,7 @@ export function RevenueByApp() {
         </div>
       </div>
 
-      <ul className="flex flex-col gap-2.5 text-sm">
+      <ul className="flex flex-col gap-2.5 text-[13px]">
         {REVENUE_BY_APP.map((a) => (
           <li key={a.app} className="flex items-center gap-2.5">
             <span

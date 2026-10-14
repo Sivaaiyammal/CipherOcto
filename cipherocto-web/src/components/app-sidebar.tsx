@@ -19,7 +19,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="overflow-hidden px-2 pt-5 pb-4">
+      <SidebarHeader className="h-16 shrink-0 justify-center overflow-hidden px-4 py-0">
         <Link
           to="/"
           title={collapsed ? "Expand sidebar" : undefined}
@@ -30,21 +30,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               setOpen(true)
             }
           }}
-          className="flex items-center gap-3"
+          className="flex items-center gap-2"
         >
-          <CipherOctoLogo />
-          <span className="text-[22px] leading-none font-bold tracking-[-0.02em] whitespace-nowrap text-white transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">
+          <CipherOctoLogo className="size-8 rounded-lg bg-white/10 [&>svg]:size-6" />
+          <span className="text-lg leading-[26px] font-bold tracking-tight whitespace-nowrap text-white transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">
             CipherOcto
           </span>
-          <span className="ml-auto rounded-full bg-mint-border px-2.5 py-0.5 text-[11px] leading-4 font-bold tracking-[0.04em] text-mint transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">
-            PRO
+          <span className="ml-auto rounded-full bg-mint-border px-1.5 py-0.5 text-[11px] leading-4 font-bold tracking-wider text-mint uppercase transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">
+            Pro
           </span>
         </Link>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={NAV_ITEMS} />
       </SidebarContent>
-      <SidebarFooter className="px-1 pb-3">
+      <SidebarFooter className="gap-4 p-4 group-data-[collapsible=icon]:px-2">
         <SidebarOrgFooter />
       </SidebarFooter>
     </Sidebar>

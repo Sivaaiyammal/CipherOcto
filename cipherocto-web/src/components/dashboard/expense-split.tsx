@@ -9,7 +9,7 @@ export function ExpenseSplit() {
   return (
     <section className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card p-5 shadow-[var(--shadow-1)]">
       <header className="flex items-baseline justify-between gap-2">
-        <h2 className="text-[15px] font-semibold text-foreground">
+        <h2 className="text-[13px] font-bold tracking-[0.01em] text-foreground">
           Operational Expense Split
         </h2>
         <span className="text-xs text-muted-foreground tabular-nums">
@@ -22,7 +22,7 @@ export function ExpenseSplit() {
           const pct = Math.round((e.value / total) * 100)
           return (
             <li key={e.label} className="flex flex-col gap-1.5">
-              <div className="flex items-start justify-between gap-3 text-[13px]">
+              <div className="flex items-start justify-between gap-3 text-xs">
                 <span className="text-foreground/85">{e.label}</span>
                 <span className="shrink-0 font-bold text-foreground tabular-nums">
                   {formatCompactUsd(e.value)} ({pct}%)

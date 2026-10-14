@@ -143,7 +143,7 @@ export function KpiCard({
       )}
     >
       <header className="flex items-center justify-between gap-2">
-        <h3 className={cn("truncate text-[15px] font-semibold", t.title)}>
+        <h3 className={cn("truncate text-[13px] font-semibold tracking-[0.01em]", t.title)}>
           {title}
         </h3>
         <span

@@ -12,7 +12,7 @@ import { currentUser } from "@/lib/current-user"
 import { cn } from "@/lib/utils"
 
 const actionBase =
-  "h-11 gap-2 rounded-xl px-4 text-sm font-semibold shadow-none [&_svg]:size-4.5!"
+  "h-10 gap-1.5 rounded-xl px-3.5 text-[13px] font-semibold tracking-[0.01em] shadow-none [&_svg]:size-4!"
 const chipBase =
   "h-9 gap-1.5 rounded-full bg-foreground/[0.04] px-3.5 text-[13px] font-medium text-muted-foreground shadow-none hover:bg-foreground/[0.08] hover:text-foreground"
 
@@ -32,7 +32,7 @@ export function WelcomeBanner({
             👋
           </span>
         </h1>
-        <p className="mt-1 text-base text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Here&apos;s what happened with your{" "}
           <strong className="font-semibold text-foreground">
             {liveApps} live apps

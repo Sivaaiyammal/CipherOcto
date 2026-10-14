@@ -52,7 +52,7 @@ const isMac =
 
 // Warm translucent fill so controls sit naturally on the #FAF8F5 canvas
 const controlSurface =
-  "rounded-[10px] bg-foreground/[0.04] transition-colors hover:bg-foreground/[0.07]"
+  "rounded-lg bg-foreground/[0.035] transition-colors hover:bg-foreground/[0.06]"
 
 function formatRange(days: number) {
   const end = new Date()
@@ -98,7 +98,7 @@ function HeaderSearch() {
 
   return (
     <label
-      className={`${controlSurface} flex h-10 w-full max-w-72 cursor-text items-center gap-2 px-3 focus-within:bg-card focus-within:ring-[3px] focus-within:ring-ring/10`}
+      className={`${controlSurface} flex h-8 w-full max-w-72 cursor-text items-center gap-2 px-3 md:max-w-80 focus-within:bg-card focus-within:ring-[3px] focus-within:ring-ring/10`}
     >
       <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
       <input
@@ -106,7 +106,7 @@ function HeaderSearch() {
         type="search"
         placeholder="Search commands, metrics, apps…"
         aria-label="Search"
-        className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+        className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
       />
       <kbd className="hidden shrink-0 rounded-md bg-card px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground shadow-[0_0_0_1px_var(--border)] sm:inline-block">
         {isMac ? "⌘K" : "Ctrl K"}
@@ -124,7 +124,7 @@ function DateRangePicker() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className={`${controlSurface} flex h-10 shrink-0 items-center gap-2 px-3 text-sm font-semibold text-foreground tabular-nums outline-none focus-visible:ring-[3px] focus-visible:ring-ring/10`}
+          className={`${controlSurface} flex h-8 shrink-0 items-center gap-1.5 px-4 text-[13px] font-semibold text-foreground tabular-nums outline-none focus-visible:ring-[3px] focus-visible:ring-ring/10`}
         >
           <CalendarIcon className="size-4 text-muted-foreground" />
           <span className="hidden 2xl:inline">
@@ -158,7 +158,7 @@ function Notifications({ hasUnread = true }: { hasUnread?: boolean }) {
     <Button
       variant="ghost"
       size="icon"
-      className="relative size-10 rounded-[10px]"
+      className="relative size-9 rounded-lg text-muted-foreground"
       aria-label={hasUnread ? "Notifications (unread)" : "Notifications"}
     >
       <BellIcon className="size-5" />
@@ -178,16 +178,16 @@ function UserMenu() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex shrink-0 items-center gap-2.5 rounded-[10px] p-1 pr-2 text-left outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:ring-[3px] focus-visible:ring-ring/10"
+          className="flex shrink-0 items-center gap-2.5 rounded-lg p-1 pr-2 text-left outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:ring-[3px] focus-visible:ring-ring/10"
         >
-          <Avatar className="size-9 shrink-0">
+          <Avatar className="size-8 shrink-0">
             <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
             <AvatarFallback className="bg-tertiary text-xs font-semibold text-tertiary-foreground">
               {initials(currentUser.name)}
             </AvatarFallback>
           </Avatar>
           <span className="hidden flex-col leading-tight lg:flex">
-            <span className="text-sm font-semibold text-foreground">
+            <span className="text-[13px] font-semibold text-foreground">
               {currentUser.name}
             </span>
             <span className="text-xs text-muted-foreground">
@@ -239,7 +239,7 @@ export function SiteHeader() {
   const app = appMatch ? getApp(appMatch.params.appId) : undefined
 
   return (
-    <header className="sticky top-0 z-20 flex h-(--header-height) shrink-0 items-center border-b bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/75 md:rounded-t-xl transition-[width,height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+    <header className="sticky top-0 z-20 flex h-(--header-height) shrink-0 items-center bg-background/80 shadow-[0_1px_8px_rgba(0,0,0,0.04)] backdrop-blur-xl md:rounded-t-xl transition-[width,height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center gap-3 px-4 lg:px-6">
         <SidebarTrigger className="-ml-1" />
         <Separator
@@ -247,7 +247,7 @@ export function SiteHeader() {
           className="data-[orientation=vertical]:h-4"
         />
         <Breadcrumb className="hidden shrink-0 sm:block">
-          <BreadcrumbList>
+          <BreadcrumbList className="text-xs">
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
                 <Link to="/">CipherOcto</Link>

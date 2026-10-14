@@ -27,7 +27,7 @@ export function SidebarOrgFooter() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="overflow-hidden rounded-xl bg-white/[0.06] p-3 transition-opacity duration-200 group-data-[collapsible=icon]:hidden">
+      <div className="overflow-hidden rounded-xl bg-white/10 p-2 transition-opacity duration-200 group-data-[collapsible=icon]:hidden">
         <div className="flex items-center justify-between text-xs text-sidebar-foreground/70">
           <span>Active Apps</span>
           <span className="font-bold text-white tabular-nums">
@@ -57,7 +57,7 @@ export function SidebarOrgFooter() {
               <SidebarMenuButton
                 size="lg"
                 tooltip={org.name}
-                className="gap-3 rounded-[10px] px-2.5 data-[state=open]:bg-sidebar-accent"
+                className="gap-2 rounded-lg px-0 hover:bg-white/[0.06] hover:text-sidebar-foreground data-[state=open]:bg-white/[0.06] group-data-[collapsible=icon]:px-2!"
               >
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-mint-border text-xs font-bold text-mint">
                   {org.initials}

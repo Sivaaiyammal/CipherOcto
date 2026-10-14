@@ -10,8 +10,8 @@ export function AppLayout() {
     <SidebarProvider
       style={
         {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--sidebar-width-icon": "3.5rem",
+          "--sidebar-width": "260px",
+          "--sidebar-width-icon": "4rem",
           "--header-height": "calc(var(--spacing) * 16)",
         } as CSSProperties
       }
@@ -20,7 +20,7 @@ export function AppLayout() {
       <SidebarInset>
         <SiteHeader />
         <div className="@container/main flex flex-1 flex-col">
-          <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+          <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 py-6">
             <Outlet />
           </div>
         </div>

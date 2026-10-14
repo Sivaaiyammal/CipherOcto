@@ -143,8 +143,8 @@ function SummaryStat({
         {icon}
       </span>
       <div className="min-w-0 leading-tight">
-        <p className="truncate text-[13px] text-muted-foreground">{label}</p>
-        <p className="text-sm font-bold text-foreground tabular-nums">
+        <p className="truncate text-xs text-muted-foreground">{label}</p>
+        <p className="text-[13px] font-bold text-foreground tabular-nums">
           {value}{" "}
           <span className={cn("font-medium", noteClass)}>{note}</span>
         </p>
@@ -215,7 +215,7 @@ export function RevenueOverview() {
               aria-pressed={!isHidden}
               onClick={() => toggleStream(s.key)}
               className={cn(
-                "inline-flex h-7 items-center gap-2 rounded-full px-3 text-xs font-semibold transition-opacity",
+                "inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-bold tracking-[0.04em] transition-opacity",
                 s.chip,
                 isHidden && "opacity-45"
               )}
