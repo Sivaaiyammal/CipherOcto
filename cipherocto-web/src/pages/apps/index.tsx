@@ -24,7 +24,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { APP_QUOTA, APPS, nextRolloutStep, type PortfolioApp } from "@/data/apps"
+import { APP_QUOTA, type PortfolioApp } from "@/data/apps"
+import { useApps } from "@/data/apps-context"
 import { exportAppsCsv } from "@/lib/export-apps-csv"
 import { cn } from "@/lib/utils"
 
@@ -40,7 +41,7 @@ type SortKey = keyof typeof SORTS
 type View = "grid" | "list"
 
 export default function AppsPage() {
-  const [apps, setApps] = React.useState<PortfolioApp[]>(APPS)
+  const { apps, promote: promoteApp } = useApps()
   const [category, setCategory] = React.useState<string>("all")
   const [query, setQuery] = React.useState("")
   const [sort, setSort] = React.useState<SortKey>("mrr-desc")
@@ -63,16 +64,7 @@ export default function AppsPage() {
       .sort(SORTS[sort].compare)
   }, [apps, category, query, sort])
 
-  const promote = (target: PortfolioApp) =>
-    setApps((prev) =>
-      prev.map((a) => {
-        if (a.id !== target.id || a.status.kind !== "staged") return a
-        const next = nextRolloutStep(a.status.rollout)
-        return next >= 100
-          ? { ...a, status: { kind: "live" }, recentlyReleased: true }
-          : { ...a, status: { kind: "staged", rollout: next } }
-      })
-    )
+  const promote = (app: PortfolioApp) => promoteApp(app.id)
 
   const slotsLeft = APP_QUOTA - apps.length
 

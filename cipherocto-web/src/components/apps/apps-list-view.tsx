@@ -64,7 +64,9 @@ export function AppsListView({ apps }: { apps: PortfolioApp[] }) {
                       <Icon />
                     </span>
                     <div className="leading-tight">
-                      <p className="text-sm font-semibold text-foreground">{app.name}</p>
+                      <Link to={`/apps/${app.id}`} className="text-sm font-semibold text-foreground hover:underline">
+                        {app.name}
+                      </Link>
                       <p className="font-mono text-[11px] text-muted-foreground">{app.bundleId}</p>
                     </div>
                   </div>

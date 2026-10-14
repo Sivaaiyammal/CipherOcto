@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Link } from "react-router-dom"
 import { DownloadIcon, SearchIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -12,11 +13,11 @@ import {
 } from "@/components/ui/table"
 import {
   APP_TONE_TILE,
-  APPS,
   releaseStatusLabel,
   type Platform,
   type ReleaseStatus,
 } from "@/data/apps"
+import { useApps } from "@/data/apps-context"
 import { exportAppsCsv } from "@/lib/export-apps-csv"
 import { integer as number, usd } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -50,6 +51,7 @@ function StatusPill({ status }: { status: ReleaseStatus }) {
 }
 
 export function AppsPortfolio() {
+  const { apps: APPS } = useApps()
   const [query, setQuery] = React.useState("")
   const [platform, setPlatform] = React.useState<Platform | "all">("all")
   const [page, setPage] = React.useState(1)
@@ -63,7 +65,7 @@ export function AppsPortfolio() {
           a.name.toLowerCase().includes(q) ||
           a.category.toLowerCase().includes(q))
     )
-  }, [query, platform])
+  }, [APPS, query, platform])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, pageCount)
@@ -182,9 +184,12 @@ export function AppsPortfolio() {
                       <Icon />
                     </span>
                     <div className="leading-tight">
-                      <p className="text-sm font-semibold text-foreground">
+                      <Link
+                        to={`/apps/${app.id}`}
+                        className="text-sm font-semibold text-foreground hover:underline"
+                      >
                         {app.name}
-                      </p>
+                      </Link>
                       <p className="text-xs text-muted-foreground">
                         v{app.version} • Build {app.build}
                       </p>
@@ -211,11 +216,12 @@ export function AppsPortfolio() {
                 </TableCell>
                 <TableCell className="pr-5 text-right lg:pr-6">
                   <Button
+                    asChild
                     variant="outline"
                     size="sm"
                     className="h-8 rounded-lg px-3 text-xs font-semibold"
                   >
-                    Configure
+                    <Link to={`/apps/${app.id}`}>Configure</Link>
                   </Button>
                 </TableCell>
               </TableRow>

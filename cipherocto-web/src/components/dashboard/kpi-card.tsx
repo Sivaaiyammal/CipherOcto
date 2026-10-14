@@ -4,7 +4,15 @@ import { Area, AreaChart, YAxis } from "recharts"
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart"
 import { cn } from "@/lib/utils"
 
-export type KpiTone = "mint" | "indigo" | "stone" | "stone-deep" | "blue"
+export type KpiTone =
+  | "mint"
+  | "indigo"
+  | "stone"
+  | "stone-deep"
+  | "blue"
+  | "lavender"
+  | "amber"
+  | "pink"
 
 // Each tone pairs a tile surface with its title, badge, pill and line colors
 // (DESIGN.md › Pastel Semantic Tiles).
@@ -47,32 +55,59 @@ const TONES: Record<
     pill: "bg-blue-hover text-tertiary",
     line: "var(--tertiary)",
   },
+  lavender: {
+    tile: "bg-lavender-surface",
+    title: "text-foreground",
+    badge: "bg-lavender-hover text-lavender",
+    pill: "bg-lavender-hover text-lavender",
+    line: "var(--lavender)",
+  },
+  amber: {
+    tile: "bg-amber-surface",
+    title: "text-foreground",
+    badge: "bg-amber-border/60 text-amber",
+    pill: "bg-amber-border/60 text-amber",
+    line: "var(--amber)",
+  },
+  pink: {
+    tile: "bg-pink-surface",
+    title: "text-foreground",
+    badge: "bg-pink-hover text-pink",
+    pill: "bg-pink-hover text-pink",
+    line: "var(--pink)",
+  },
 }
 
 export type KpiCardProps = {
   title: string
-  value: string
+  value: React.ReactNode
+  /** Small suffix after the value, e.g. "MAU" */
+  unit?: React.ReactNode
   icon: React.ReactNode
   tone: KpiTone
   delta: { label: string; icon: React.ReactNode }
-  caption: string
-  trend: number[]
-  breakdown: [{ label: string; value: string }, { label: string; value: string }]
+  caption: React.ReactNode
+  /** Sparkline points; when omitted, `children` fills that slot instead */
+  trend?: number[]
+  breakdown: { label: string; value: React.ReactNode }[]
+  children?: React.ReactNode
 }
 
 export function KpiCard({
   title,
   value,
+  unit,
   icon,
   tone,
   delta,
   caption,
   trend,
   breakdown,
+  children,
 }: KpiCardProps) {
   const t = TONES[tone]
   const gradientId = React.useId().replace(/:/g, "")
-  const data = trend.map((v, i) => ({ i, v }))
+  const data = trend?.map((v, i) => ({ i, v }))
   const config = { v: { label: title, color: t.line } } satisfies ChartConfig
 
   return (
@@ -99,6 +134,11 @@ export function KpiCard({
       <div>
         <p className="text-2xl leading-9 font-bold @[11.5rem]/kpi:text-[28px] tracking-[-0.02em] text-foreground tabular-nums">
           {value}
+          {unit && (
+            <span className="ml-1.5 text-xs font-medium tracking-normal text-muted-foreground">
+              {unit}
+            </span>
+          )}
         </p>
         <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
           <span
@@ -114,28 +154,39 @@ export function KpiCard({
         </p>
       </div>
 
-      <ChartContainer
-        config={config}
-        className="-mx-1 mt-auto aspect-auto h-14 w-[calc(100%+0.5rem)]"
-      >
-        <AreaChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-v)" stopOpacity={0.25} />
-              <stop offset="100%" stopColor="var(--color-v)" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <YAxis hide domain={["dataMin - 4", "dataMax + 2"]} />
-          <Area
-            dataKey="v"
-            type="monotone"
-            stroke="var(--color-v)"
-            strokeWidth={2}
-            fill={`url(#${gradientId})`}
-            isAnimationActive={false}
-          />
-        </AreaChart>
-      </ChartContainer>
+      {data ? (
+        <ChartContainer
+          config={config}
+          className="-mx-1 mt-auto aspect-auto h-14 w-[calc(100%+0.5rem)]"
+        >
+          <AreaChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-v)" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="var(--color-v)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <YAxis
+              hide
+              domain={([min, max]: readonly number[]) => {
+                // Pad relative to the range so tiny (%) and huge ($) series both read well
+                const pad = (max - min || Math.abs(max) || 1) * 0.35
+                return [min - pad, max + pad * 0.3]
+              }}
+            />
+            <Area
+              dataKey="v"
+              type="monotone"
+              stroke="var(--color-v)"
+              strokeWidth={2}
+              fill={`url(#${gradientId})`}
+              isAnimationActive={false}
+            />
+          </AreaChart>
+        </ChartContainer>
+      ) : (
+        <div className="mt-auto">{children}</div>
+      )}
 
       <footer className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
         {breakdown.map((item) => (

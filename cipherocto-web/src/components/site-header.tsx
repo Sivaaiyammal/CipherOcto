@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useMatch } from "react-router-dom"
 import {
   BellIcon,
   CalendarIcon,
@@ -34,6 +34,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { currentUser } from "@/lib/current-user"
+import { useApps } from "@/data/apps-context"
 import { findNavItem } from "@/lib/navigation"
 
 const DATE_PRESETS = [
@@ -222,6 +223,9 @@ export function SiteHeader() {
   const { pathname } = useLocation()
   const navItem = findNavItem(pathname)
   const title = navItem?.pageTitle ?? navItem?.title ?? "Not found"
+  const appMatch = useMatch("/apps/:appId")
+  const { getApp } = useApps()
+  const app = appMatch ? getApp(appMatch.params.appId) : undefined
 
   return (
     <header className="sticky top-0 z-20 flex h-(--header-height) shrink-0 items-center border-b bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/75 md:rounded-t-xl transition-[width,height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -238,7 +242,7 @@ export function SiteHeader() {
                 <Link to="/">CipherOcto</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
-            {navItem?.group && (
+            {navItem?.group && !appMatch && (
               <>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem className="hidden xl:inline-flex">
@@ -246,10 +250,28 @@ export function SiteHeader() {
                 </BreadcrumbItem>
               </>
             )}
-            <BreadcrumbSeparator className={navItem?.group ? "hidden xl:block" : undefined} />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="font-semibold">{title}</BreadcrumbPage>
-            </BreadcrumbItem>
+            <BreadcrumbSeparator
+              className={navItem?.group && !appMatch ? "hidden xl:block" : undefined}
+            />
+            {appMatch ? (
+              <>
+                <BreadcrumbItem className="hidden md:inline-flex">
+                  <BreadcrumbLink asChild>
+                    <Link to="/apps">{title}</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="font-semibold">
+                    {app?.name ?? "Unknown app"}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </>
+            ) : (
+              <BreadcrumbItem>
+                <BreadcrumbPage className="font-semibold">{title}</BreadcrumbPage>
+              </BreadcrumbItem>
+            )}
           </BreadcrumbList>
         </Breadcrumb>
 

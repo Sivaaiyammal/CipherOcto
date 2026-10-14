@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import { ArrowRightIcon, HistoryIcon, Settings2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -119,7 +120,9 @@ export function StagedRollouts({
                     >
                       <Icon />
                     </span>
-                    <span className="text-sm font-semibold text-foreground">{app.name}</span>
+                    <Link to={`/apps/${app.id}`} className="text-sm font-semibold text-foreground hover:underline">
+                      {app.name}
+                    </Link>
                   </div>
                 </TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground">
@@ -160,13 +163,15 @@ export function StagedRollouts({
                       <ArrowRightIcon />
                     </Button>
                   ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 rounded-lg px-2.5 text-xs font-semibold"
-                    >
-                      {status.kind === "live" ? "Rollback" : "Details"}
-                    </Button>
+                    status.kind === "live" ? (
+                      <Button variant="ghost" size="sm" className="h-8 rounded-lg px-2.5 text-xs font-semibold">
+                        Rollback
+                      </Button>
+                    ) : (
+                      <Button asChild variant="ghost" size="sm" className="h-8 rounded-lg px-2.5 text-xs font-semibold">
+                        <Link to={`/apps/${app.id}`}>Details</Link>
+                      </Button>
+                    )
                   )}
                 </TableCell>
               </TableRow>

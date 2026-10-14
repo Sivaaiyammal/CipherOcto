@@ -91,17 +91,22 @@ export function AppCard({
     <article className="flex min-w-0 flex-col rounded-2xl border border-border/60 bg-card shadow-[var(--shadow-1)] transition-[transform,box-shadow] duration-200 hover:-translate-y-px hover:shadow-[var(--shadow-2)]">
       <div className="flex flex-1 flex-col gap-3.5 p-4">
         <header className="flex items-start gap-3">
-          <span
+          <Link
+            to={`/apps/${app.id}`}
+            aria-hidden="true"
+            tabIndex={-1}
             className={cn(
               "flex size-11 shrink-0 items-center justify-center rounded-xl [&_svg]:size-5.5",
               APP_TONE_TILE[app.tone]
             )}
           >
             <Icon />
-          </span>
+          </Link>
           <div className="min-w-0 flex-1 leading-tight">
             <h3 className="flex items-center gap-1.5 text-base font-semibold text-foreground">
-              <span className="truncate">{app.name}</span>
+              <Link to={`/apps/${app.id}`} className="truncate hover:underline">
+                {app.name}
+              </Link>
               <span className={cn("size-1.5 shrink-0 rounded-full", status.dot)} />
             </h3>
             <p className="truncate font-mono text-[11px] text-muted-foreground">
@@ -186,8 +191,8 @@ export function AppCard({
           </Button>
         ) : null}
         {!isStaged && (
-          <Button variant="ghost" size="sm" className="h-9 flex-1 rounded-lg text-xs font-semibold">
-            Open Console
+          <Button asChild variant="ghost" size="sm" className="h-9 flex-1 rounded-lg text-xs font-semibold">
+            <Link to={`/apps/${app.id}`}>Open Console</Link>
           </Button>
         )}
         <Button
@@ -212,9 +217,11 @@ export function AppCard({
           <DropdownMenuContent align="end">
             {isStaged && (
               <>
-                <DropdownMenuItem>
-                  <SquareTerminalIcon />
-                  Open console
+                <DropdownMenuItem asChild>
+                  <Link to={`/apps/${app.id}`}>
+                    <SquareTerminalIcon />
+                    Open console
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <ChartNoAxesColumnIcon />
