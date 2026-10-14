@@ -2,11 +2,9 @@ import * as React from "react"
 
 import { CipherOctoLogo } from "@/components/cipherocto-logo"
 import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar"
@@ -25,11 +23,6 @@ import {
 } from "lucide-react"
 
 const data = {
-  user: {
-    name: "Admin",
-    email: "admin@cipherocto.com",
-    avatar: "",
-  },
   navMain: [
     { title: "Dashboard", url: "/", icon: <LayoutDashboardIcon /> },
     { title: "Apps", url: "/apps", icon: <GripIcon /> },
@@ -85,9 +78,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           onSelect={setActiveTitle}
         />
       </SidebarContent>
-      <SidebarFooter className="px-1">
-        <NavUser user={data.user} />
-      </SidebarFooter>
     </Sidebar>
   )
 }
