@@ -26,7 +26,7 @@ export function WelcomeBanner({
   return (
     <section className="flex flex-col gap-5 px-4 lg:px-6 @3xl/main:flex-row @3xl/main:items-start @3xl/main:justify-between">
       <div className="max-w-md">
-        <h1 className="text-[28px] leading-9 font-bold tracking-[-0.02em] text-foreground @xl/main:text-4xl @xl/main:leading-11 @xl/main:tracking-[-0.025em]">
+        <h1 className="text-[28px] leading-9 font-bold tracking-[-0.02em] text-foreground">
           Welcome back, {currentUser.firstName}{" "}
           <span role="img" aria-label="waving hand">
             👋
@@ -55,7 +55,7 @@ export function WelcomeBanner({
           variant="ghost"
           className={cn(
             actionBase,
-            "bg-blue-surface text-foreground hover:bg-blue-hover"
+            "bg-stream-iap-soft text-foreground/80 hover:bg-neutral-strong"
           )}
         >
           <SlidersHorizontalIcon />
@@ -78,17 +78,19 @@ export function WelcomeBanner({
             "bg-neutral-strong text-foreground hover:bg-neutral-deep"
           )}
         >
-          <FileSpreadsheetIcon />
+          <FileSpreadsheetIcon className="text-mint" />
           Financial Report
         </Button>
-        <Button variant="ghost" className={chipBase}>
-          <PlusIcon />
-          Expense
-        </Button>
-        <Button variant="ghost" className={chipBase}>
-          <ListChecksIcon />
-          Task
-        </Button>
+        <div className="hidden items-center gap-2 @6xl/main:flex">
+          <Button variant="ghost" className={chipBase}>
+            <PlusIcon />
+            Expense
+          </Button>
+          <Button variant="ghost" className={chipBase}>
+            <ListChecksIcon />
+            Task
+          </Button>
+        </div>
       </div>
     </section>
   )

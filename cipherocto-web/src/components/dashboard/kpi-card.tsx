@@ -157,7 +157,7 @@ export function KpiCard({
       </header>
 
       <div>
-        <p className="text-2xl leading-9 font-bold @[11.5rem]/kpi:text-[28px] tracking-[-0.02em] text-foreground tabular-nums">
+        <p className="truncate text-2xl leading-9 font-bold tracking-[-0.02em] text-foreground tabular-nums">
           {value}
           {unit && (
             <span className="ml-1.5 text-xs font-medium tracking-normal text-muted-foreground">

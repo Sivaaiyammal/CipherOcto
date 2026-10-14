@@ -183,7 +183,7 @@ export function RevenueOverview() {
         <div
           role="radiogroup"
           aria-label="Period"
-          className="flex shrink-0 self-start rounded-full bg-foreground/[0.05] p-1"
+          className="flex shrink-0 self-start rounded-xl bg-foreground/[0.05] p-1"
         >
           {PERIODS.map((p) => (
             <button
@@ -193,7 +193,7 @@ export function RevenueOverview() {
               aria-checked={period === p.value}
               onClick={() => setPeriod(p.value)}
               className={cn(
-                "h-8 rounded-full px-3.5 text-[13px] font-semibold transition-colors",
+                "h-7 rounded-lg px-3 text-[11px] font-bold tracking-[0.02em] transition-colors",
                 period === p.value
                   ? "bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
                   : "text-muted-foreground hover:text-foreground"

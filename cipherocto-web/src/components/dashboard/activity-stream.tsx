@@ -23,7 +23,7 @@ const ACTIVITY: {
     message: (
       <>
         Remote flag{" "}
-        <code className="rounded bg-foreground/[0.06] px-1 py-0.5 font-mono text-[11px]">
+        <code className="inline-block rounded bg-foreground/[0.06] px-1.5 py-0.5 font-mono text-[11px] break-all">
           paywall_v3_experiment
         </code>{" "}
         enabled by <strong className="font-semibold">Elena</strong>
@@ -34,7 +34,7 @@ const ACTIVITY: {
   {
     id: "payout",
     icon: <LandmarkIcon />,
-    tone: "bg-neutral-strong text-foreground",
+    tone: "bg-stream-iap-soft text-foreground/80",
     message: (
       <>
         Stripe payout processed:{" "}
@@ -79,15 +79,15 @@ export function ActivityStream() {
           <li key={item.id} className="flex gap-3">
             <span
               className={cn(
-                "flex size-7 shrink-0 items-center justify-center rounded-lg [&_svg]:size-3.5",
+                "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full [&_svg]:size-4",
                 item.tone
               )}
             >
               {item.icon}
             </span>
-            <div className="min-w-0 text-[13px] leading-[18px] text-foreground">
+            <div className="min-w-0 flex-1 text-[13px] leading-snug text-foreground">
               <p>{item.message}</p>
-              <p className="mt-0.5 text-xs text-subtle-foreground">{item.time}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{item.time}</p>
             </div>
           </li>
         ))}

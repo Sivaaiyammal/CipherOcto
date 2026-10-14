@@ -1,8 +1,15 @@
 import * as React from "react"
 import { Link } from "react-router-dom"
-import { DownloadIcon, SearchIcon } from "lucide-react"
+import { ArchiveIcon, DownloadIcon, EllipsisVerticalIcon, PencilIcon, SearchIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Table,
   TableBody,
@@ -144,7 +151,7 @@ export function AppsPortfolio() {
         </div>
       </header>
 
-      <Table className="min-w-[760px]">
+      <Table className="min-w-[900px]">
         <TableHeader className="bg-background">
           <TableRow className="hover:bg-transparent">
             {[
@@ -154,7 +161,7 @@ export function AppsPortfolio() {
               ["Revenue", "text-right"],
               ["Subscribers", "text-right"],
               ["Release Status", "pl-6"],
-              ["", "pr-5 lg:pr-6"],
+              ["Quick Actions", "pr-5 text-right lg:pr-6"],
             ].map(([label, cls], i) => (
               <TableHead
                 key={i}
@@ -163,7 +170,7 @@ export function AppsPortfolio() {
                   cls
                 )}
               >
-                {label || <span className="sr-only">Actions</span>}
+                {label}
               </TableHead>
             ))}
           </TableRow>
@@ -177,7 +184,7 @@ export function AppsPortfolio() {
                   <div className="flex items-center gap-3">
                     <span
                       className={cn(
-                        "flex size-9 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-5",
+                        "flex size-10 shrink-0 items-center justify-center rounded-xl [&_svg]:size-5.5",
                         APP_TONE_TILE[app.tone]
                       )}
                     >
@@ -186,7 +193,7 @@ export function AppsPortfolio() {
                     <div className="leading-tight">
                       <Link
                         to={`/apps/${app.id}`}
-                        className="text-sm font-semibold text-foreground hover:underline"
+                        className="text-[13px] font-bold text-foreground hover:underline"
                       >
                         {app.name}
                       </Link>
@@ -215,14 +222,50 @@ export function AppsPortfolio() {
                   <StatusPill status={app.status} />
                 </TableCell>
                 <TableCell className="pr-5 text-right lg:pr-6">
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
-                    className="h-8 rounded-lg px-3 text-xs font-semibold"
-                  >
-                    <Link to={`/apps/${app.id}`}>Configure</Link>
-                  </Button>
+                  <div className="inline-flex items-center justify-end gap-1">
+                    <Button
+                      asChild
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 rounded-lg bg-foreground/[0.04] px-2.5 text-xs font-semibold hover:bg-foreground/[0.08]"
+                    >
+                      <Link to={`/remote-config?app=${app.id}`}>Config</Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 rounded-lg bg-foreground/[0.04] px-2.5 text-xs font-semibold hover:bg-foreground/[0.08]"
+                    >
+                      <Link to={`/apps/${app.id}`}>Analytics</Link>
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 rounded-md text-muted-foreground hover:text-foreground"
+                          aria-label={`More actions for ${app.name}`}
+                        >
+                          <EllipsisVerticalIcon />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link to={`/apps/${app.id}`}>Open app console</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <PencilIcon />
+                          Edit store listing
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem variant="destructive">
+                          <ArchiveIcon />
+                          Archive app
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </TableCell>
               </TableRow>
             )
@@ -240,7 +283,7 @@ export function AppsPortfolio() {
         </TableBody>
       </Table>
 
-      <footer className="flex flex-col gap-3 border-t px-5 py-3.5 text-[13px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between lg:px-6">
+      <footer className="flex flex-col gap-3 bg-foreground/[0.025] px-5 py-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between lg:px-6">
         <p className="tabular-nums">
           {filtered.length === 0 ? (
             "No applications"
@@ -258,7 +301,7 @@ export function AppsPortfolio() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 rounded-lg px-3 text-xs"
+            className="h-8 rounded-lg bg-card px-3 text-xs shadow-[0_1px_2px_rgba(15,23,42,0.06)] hover:bg-foreground/[0.06]"
             disabled={currentPage === 1}
             onClick={() => setPage(currentPage - 1)}
           >
@@ -270,7 +313,10 @@ export function AppsPortfolio() {
               variant={n === currentPage ? "default" : "ghost"}
               size="sm"
               aria-current={n === currentPage ? "page" : undefined}
-              className="size-8 rounded-lg p-0 text-xs font-semibold"
+              className={cn(
+                "size-8 rounded-lg p-0 text-xs font-semibold shadow-[0_1px_2px_rgba(15,23,42,0.06)]",
+                n !== currentPage && "bg-card hover:bg-foreground/[0.06]"
+              )}
               onClick={() => setPage(n)}
             >
               {n}
@@ -279,7 +325,7 @@ export function AppsPortfolio() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 rounded-lg px-3 text-xs"
+            className="h-8 rounded-lg bg-card px-3 text-xs shadow-[0_1px_2px_rgba(15,23,42,0.06)] hover:bg-foreground/[0.06]"
             disabled={currentPage === pageCount}
             onClick={() => setPage(currentPage + 1)}
           >

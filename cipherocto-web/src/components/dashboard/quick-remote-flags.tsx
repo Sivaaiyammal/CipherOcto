@@ -47,7 +47,7 @@ export function QuickRemoteFlags() {
                 <div className="flex flex-wrap items-center gap-1.5">
                   <label
                     htmlFor={id}
-                    className="font-mono text-[13px] font-semibold text-foreground"
+                    className="truncate text-[13px] font-bold tracking-[0.01em] text-foreground"
                   >
                     {flag.key}
                   </label>
