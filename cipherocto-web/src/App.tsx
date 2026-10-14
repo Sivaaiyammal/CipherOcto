@@ -14,6 +14,7 @@ import DashboardPage from '@/pages/dashboard'
 import FinancePage from '@/pages/finance'
 import LoginPage from '@/pages/login'
 import PlaceholderPage from '@/pages/placeholder'
+import ReleasesPage from '@/pages/releases'
 import RemoteConfigPage from '@/pages/remote-config'
 import TeamPage from '@/pages/team'
 import SubscriptionsPage from '@/pages/subscriptions'
@@ -38,6 +39,7 @@ function App() {
                   <Route path="analytics" element={<AnalyticsPage />} />
                   <Route path="projects" element={<ProjectsPage />} />
                   <Route path="team" element={<TeamPage />} />
+                  <Route path="releases" element={<ReleasesPage />} />
                   <Route path="*" element={<PlaceholderPage />} />
                 </Route>
               </Route>
