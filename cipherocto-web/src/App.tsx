@@ -12,6 +12,7 @@ import RegisterAppPage from '@/pages/apps/register'
 import ProjectsPage from '@/pages/projects'
 import DashboardPage from '@/pages/dashboard'
 import FinancePage from '@/pages/finance'
+import IntegrationsPage from '@/pages/integrations'
 import LoginPage from '@/pages/login'
 import PlaceholderPage from '@/pages/placeholder'
 import ReleasesPage from '@/pages/releases'
@@ -40,6 +41,7 @@ function App() {
                   <Route path="projects" element={<ProjectsPage />} />
                   <Route path="team" element={<TeamPage />} />
                   <Route path="releases" element={<ReleasesPage />} />
+                  <Route path="integrations" element={<IntegrationsPage />} />
                   <Route path="*" element={<PlaceholderPage />} />
                 </Route>
               </Route>

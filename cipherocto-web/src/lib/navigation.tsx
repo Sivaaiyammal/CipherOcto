@@ -44,7 +44,7 @@ export const NAV_ITEMS: NavItem[] = [
   { title: "Projects & Tasks", url: "/projects", icon: ListChecksIcon, group: "Workspace", pageTitle: "Projects & Tasks" },
   { title: "Team Management", url: "/team", icon: UsersIcon, group: "Workspace", pageTitle: "Team Management & Access Control" },
   { title: "Releases", url: "/releases", icon: RocketIcon, group: "Platform", pageTitle: "Releases & Deployments" },
-  { title: "Integrations", url: "/integrations", icon: NetworkIcon, group: "Platform" },
+  { title: "Integrations", url: "/integrations", icon: NetworkIcon, group: "Platform", pageTitle: "Integrations & API Hub" },
   { title: "Settings", url: "/settings", icon: SettingsIcon, group: "Workspace" },
 ]
 
