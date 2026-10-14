@@ -9,6 +9,7 @@ import AppDetailPage from '@/pages/apps/app-detail'
 import AppsPage from '@/pages/apps'
 import RegisterAppPage from '@/pages/apps/register'
 import DashboardPage from '@/pages/dashboard'
+import FinancePage from '@/pages/finance'
 import LoginPage from '@/pages/login'
 import PlaceholderPage from '@/pages/placeholder'
 import RemoteConfigPage from '@/pages/remote-config'
@@ -30,6 +31,7 @@ function App() {
                   <Route path="apps/:appId" element={<AppDetailPage />} />
                   <Route path="remote-config" element={<RemoteConfigPage />} />
                   <Route path="subscriptions" element={<SubscriptionsPage />} />
+                  <Route path="finance" element={<FinancePage />} />
                   <Route path="*" element={<PlaceholderPage />} />
                 </Route>
               </Route>
