@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Link, useLocation } from "react-router-dom"
 import {
   BellIcon,
   CalendarIcon,
@@ -33,6 +34,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { currentUser } from "@/lib/current-user"
+import { findNavItem } from "@/lib/navigation"
 
 const DATE_PRESETS = [
   { id: "7d", label: "Last 7 Days", days: 7 },
@@ -123,10 +125,12 @@ function DateRangePicker() {
           className={`${controlSurface} flex h-10 shrink-0 items-center gap-2 px-3 text-sm font-semibold text-foreground tabular-nums outline-none focus-visible:ring-[3px] focus-visible:ring-ring/10`}
         >
           <CalendarIcon className="size-4 text-muted-foreground" />
-          <span className="hidden md:inline">
+          <span className="hidden 2xl:inline">
             {preset.label}: {formatRange(preset.days)}
           </span>
-          <span className="md:hidden">{preset.label}</span>
+          <span className="2xl:hidden" title={formatRange(preset.days)}>
+            {preset.label}
+          </span>
           <ChevronDownIcon className="size-4 text-muted-foreground" />
         </button>
       </DropdownMenuTrigger>
@@ -214,7 +218,11 @@ function UserMenu() {
   )
 }
 
-export function SiteHeader({ title = "Dashboard" }: { title?: string }) {
+export function SiteHeader() {
+  const { pathname } = useLocation()
+  const navItem = findNavItem(pathname)
+  const title = navItem?.pageTitle ?? navItem?.title ?? "Not found"
+
   return (
     <header className="sticky top-0 z-20 flex h-(--header-height) shrink-0 items-center border-b bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/75 md:rounded-t-xl transition-[width,height] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center gap-3 px-4 lg:px-6">
@@ -226,9 +234,19 @@ export function SiteHeader({ title = "Dashboard" }: { title?: string }) {
         <Breadcrumb className="hidden shrink-0 sm:block">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/">CipherOcto</BreadcrumbLink>
+              <BreadcrumbLink asChild>
+                <Link to="/">CipherOcto</Link>
+              </BreadcrumbLink>
             </BreadcrumbItem>
-            <BreadcrumbSeparator />
+            {navItem?.group && (
+              <>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem className="hidden xl:inline-flex">
+                  {navItem.group}
+                </BreadcrumbItem>
+              </>
+            )}
+            <BreadcrumbSeparator className={navItem?.group ? "hidden xl:block" : undefined} />
             <BreadcrumbItem>
               <BreadcrumbPage className="font-semibold">{title}</BreadcrumbPage>
             </BreadcrumbItem>

@@ -95,20 +95,4 @@ export const EXPENSE_SPLIT = [
   { label: "Paid Growth & UA Campaigns", value: 7_800, color: "var(--stream-iap)" },
 ]
 
-export const usd = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-})
-
-const compactUsd = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  notation: "compact",
-  maximumFractionDigits: 1,
-})
-
-/** $184.9k style, lower-case suffix per the design */
-export function formatCompactUsd(value: number) {
-  return compactUsd.format(value).replace(/[KMB]$/, (s) => s.toLowerCase())
-}
+export { formatCompactUsd, usd } from "@/lib/format"

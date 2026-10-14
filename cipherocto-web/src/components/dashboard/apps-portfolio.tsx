@@ -11,13 +11,14 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {
+  APP_TONE_TILE,
   APPS,
-  type AppTone,
+  releaseStatusLabel,
   type Platform,
-  type PortfolioApp,
   type ReleaseStatus,
-} from "@/components/dashboard/apps-data"
-import { usd } from "@/components/dashboard/revenue-data"
+} from "@/data/apps"
+import { exportAppsCsv } from "@/lib/export-apps-csv"
+import { integer as number, usd } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 4
@@ -27,28 +28,6 @@ const PLATFORM_FILTERS: { value: Platform | "all"; label: string }[] = [
   { value: "ios", label: "iOS" },
   { value: "android", label: "Android" },
 ]
-
-const TONE_TILE: Record<AppTone, string> = {
-  mint: "bg-mint-hover text-mint",
-  blue: "bg-blue-hover text-tertiary",
-  lavender: "bg-lavender-hover text-lavender",
-  stone: "bg-neutral-strong text-foreground",
-  pink: "bg-pink-hover text-pink",
-  amber: "bg-amber-surface text-amber",
-}
-
-const number = new Intl.NumberFormat("en-US")
-
-function statusLabel(status: ReleaseStatus) {
-  switch (status.kind) {
-    case "live":
-      return "Live (Prod)"
-    case "review":
-      return "Review Pending"
-    case "staged":
-      return `Staged Rollout (${status.rollout}%)`
-  }
-}
 
 function StatusPill({ status }: { status: ReleaseStatus }) {
   const tone = {
@@ -65,48 +44,9 @@ function StatusPill({ status }: { status: ReleaseStatus }) {
       )}
     >
       <span className="size-1.5 rounded-full bg-(--dot)" />
-      {statusLabel(status)}
+      {releaseStatusLabel(status)}
     </span>
   )
-}
-
-function exportCsv(apps: PortfolioApp[]) {
-  const header = [
-    "App",
-    "Version",
-    "Build",
-    "Category",
-    "Installs (30D)",
-    "Revenue / mo (USD)",
-    "Subscribers",
-    "Release Status",
-    "Platforms",
-  ]
-  const escape = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
-  const rows = apps.map((a) =>
-    [
-      a.name,
-      a.version,
-      a.build,
-      a.category,
-      a.installs30d,
-      a.revenueMonthly,
-      a.subscribers,
-      statusLabel(a.status),
-      a.platforms.join(" / "),
-    ]
-      .map(escape)
-      .join(",")
-  )
-  const blob = new Blob([[header.map(escape).join(","), ...rows].join("\n")], {
-    type: "text/csv;charset=utf-8",
-  })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement("a")
-  link.href = url
-  link.download = `cipherocto-apps-${new Date().toISOString().slice(0, 10)}.csv`
-  link.click()
-  URL.revokeObjectURL(url)
 }
 
 export function AppsPortfolio() {
@@ -193,7 +133,7 @@ export function AppsPortfolio() {
           <Button
             variant="outline"
             className="h-9 rounded-[10px] px-3 text-[13px] font-semibold"
-            onClick={() => exportCsv(filtered)}
+            onClick={() => exportAppsCsv(filtered)}
             disabled={filtered.length === 0}
           >
             <DownloadIcon />
@@ -236,7 +176,7 @@ export function AppsPortfolio() {
                     <span
                       className={cn(
                         "flex size-9 shrink-0 items-center justify-center rounded-[10px] [&_svg]:size-5",
-                        TONE_TILE[app.tone]
+                        APP_TONE_TILE[app.tone]
                       )}
                     >
                       <Icon />
