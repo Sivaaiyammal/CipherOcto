@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -6,50 +5,57 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { CirclePlusIcon, MailIcon } from "lucide-react"
 
 export function NavMain({
   items,
+  activeTitle,
+  onSelect,
 }: {
   items: {
     title: string
     url: string
     icon?: React.ReactNode
   }[]
+  activeTitle: string
+  onSelect: (title: string) => void
 }) {
   return (
-    <SidebarGroup>
-      <SidebarGroupContent className="flex flex-col gap-2">
-        <SidebarMenu>
-          <SidebarMenuItem className="flex items-center gap-2">
-            <SidebarMenuButton
-              tooltip="Quick Create"
-              className="min-w-8 bg-sidebar-primary text-sidebar-primary-foreground duration-200 ease-linear hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground active:bg-sidebar-primary/90 active:text-sidebar-primary-foreground"
-            >
-              <CirclePlusIcon
-              />
-              <span>Quick Create</span>
-            </SidebarMenuButton>
-            <Button
-              size="icon"
-              className="size-8 group-data-[collapsible=icon]:opacity-0"
-              variant="outline"
-            >
-              <MailIcon
-              />
-              <span className="sr-only">Inbox</span>
-            </Button>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon}
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+    <SidebarGroup className="px-3">
+      <SidebarGroupContent>
+        <SidebarMenu className="gap-1.5">
+          {items.map((item) => {
+            const isActive = item.title === activeTitle
+
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  size="lg"
+                  tooltip={item.title}
+                  isActive={isActive}
+                  className="gap-3 rounded-[10px] px-3 text-[15px] font-semibold text-sidebar-foreground/85 [&_svg]:size-5! data-[active=true]:bg-sidebar-primary! data-[active=true]:text-sidebar-primary-foreground!"
+                >
+                  <a
+                    href={item.url}
+                    aria-current={isActive ? "page" : undefined}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      onSelect(item.title)
+                    }}
+                  >
+                    {item.icon}
+                    <span>{item.title}</span>
+                    {isActive && (
+                      <span
+                        aria-hidden="true"
+                        className="ml-auto size-1.5 shrink-0 rounded-full bg-mint-border group-data-[collapsible=icon]:hidden"
+                      />
+                    )}
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

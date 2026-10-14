@@ -1,201 +1,75 @@
 import * as React from "react"
 
-import { NavDocuments } from "@/components/nav-documents"
+import { CipherOctoLogo } from "@/components/cipherocto-logo"
 import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon } from "lucide-react"
+import {
+  BanknoteIcon,
+  ChartSplineIcon,
+  GripIcon,
+  LayoutDashboardIcon,
+  ListChecksIcon,
+  NetworkIcon,
+  RocketIcon,
+  SettingsIcon,
+  SlidersHorizontalIcon,
+  TagIcon,
+  UsersIcon,
+} from "lucide-react"
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "Admin",
+    email: "admin@cipherocto.com",
+    avatar: "",
   },
   navMain: [
+    { title: "Dashboard", url: "/", icon: <LayoutDashboardIcon /> },
+    { title: "Apps", url: "/apps", icon: <GripIcon /> },
     {
-      title: "Dashboard",
-      url: "#",
-      icon: (
-        <LayoutDashboardIcon
-        />
-      ),
+      title: "Remote Configuration",
+      url: "/remote-config",
+      icon: <SlidersHorizontalIcon />,
     },
-    {
-      title: "Lifecycle",
-      url: "#",
-      icon: (
-        <ListIcon
-        />
-      ),
-    },
-    {
-      title: "Analytics",
-      url: "#",
-      icon: (
-        <ChartBarIcon
-        />
-      ),
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: (
-        <FolderIcon
-        />
-      ),
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: (
-        <UsersIcon
-        />
-      ),
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: (
-        <CameraIcon
-        />
-      ),
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: (
-        <FileTextIcon
-        />
-      ),
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: (
-        <FileTextIcon
-        />
-      ),
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: (
-        <Settings2Icon
-        />
-      ),
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: (
-        <CircleHelpIcon
-        />
-      ),
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: (
-        <SearchIcon
-        />
-      ),
-    },
-  ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: (
-        <DatabaseIcon
-        />
-      ),
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: (
-        <FileChartColumnIcon
-        />
-      ),
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: (
-        <FileIcon
-        />
-      ),
-    },
+    { title: "Subscriptions", url: "/subscriptions", icon: <TagIcon /> },
+    { title: "Revenue & Finance", url: "/finance", icon: <BanknoteIcon /> },
+    { title: "Analytics", url: "/analytics", icon: <ChartSplineIcon /> },
+    { title: "Projects & Tasks", url: "/projects", icon: <ListChecksIcon /> },
+    { title: "Team Management", url: "/team", icon: <UsersIcon /> },
+    { title: "Releases", url: "/releases", icon: <RocketIcon /> },
+    { title: "Integrations", url: "/integrations", icon: <NetworkIcon /> },
+    { title: "Settings", url: "/settings", icon: <SettingsIcon /> },
   ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [activeTitle, setActiveTitle] = React.useState("Dashboard")
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
-            >
-              <a href="#">
-                <CommandIcon className="size-5!" />
-                <span className="text-base font-semibold">Acme Inc.</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarHeader className="px-4 pt-5 pb-4">
+        <a href="/" className="flex items-center gap-3">
+          <CipherOctoLogo />
+          <span className="text-[22px] leading-none font-bold tracking-[-0.02em] text-white">
+            CipherOcto
+          </span>
+          <span className="ml-auto rounded-full bg-mint-border px-2.5 py-0.5 text-[11px] leading-4 font-bold tracking-[0.04em] text-mint">
+            PRO
+          </span>
+        </a>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain
+          items={data.navMain}
+          activeTitle={activeTitle}
+          onSelect={setActiveTitle}
+        />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
