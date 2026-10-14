@@ -9,6 +9,7 @@ import AnalyticsPage from '@/pages/analytics'
 import AppDetailPage from '@/pages/apps/app-detail'
 import AppsPage from '@/pages/apps'
 import RegisterAppPage from '@/pages/apps/register'
+import ProjectsPage from '@/pages/projects'
 import DashboardPage from '@/pages/dashboard'
 import FinancePage from '@/pages/finance'
 import LoginPage from '@/pages/login'
@@ -34,6 +35,7 @@ function App() {
                   <Route path="subscriptions" element={<SubscriptionsPage />} />
                   <Route path="finance" element={<FinancePage />} />
                   <Route path="analytics" element={<AnalyticsPage />} />
+                  <Route path="projects" element={<ProjectsPage />} />
                   <Route path="*" element={<PlaceholderPage />} />
                 </Route>
               </Route>
