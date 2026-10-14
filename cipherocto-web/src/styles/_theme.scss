@@ -56,6 +56,11 @@
     --#{$name}-border: #{map.get($suite, border)};
   }
 
+  @each $name, $stream in $streams {
+    --stream-#{$name}: #{map.get($stream, strong)};
+    --stream-#{$name}-soft: #{map.get($stream, soft)};
+  }
+
   --shadow-1: #{$shadow-1};
   --shadow-2: #{$shadow-2};
   --shadow-3: #{$shadow-3};
@@ -95,6 +100,13 @@
   --chart-3: #a78bfa;
   --chart-4: #f472b6;
   --chart-5: #facc15;
+
+  --stream-mrr: #34d399;
+  --stream-mrr-soft: #064e3b;
+  --stream-iap: #a5b4fc;
+  --stream-iap-soft: #312e81;
+  --stream-ads: #f1f5f9;
+  --stream-ads-soft: #334155;
 
   --sidebar: #020617;
   --sidebar-foreground: #{$divider};

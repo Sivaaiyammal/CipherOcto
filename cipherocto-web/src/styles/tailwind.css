@@ -77,6 +77,14 @@
   --color-lavender-hover: var(--lavender-hover);
   --color-lavender-border: var(--lavender-border);
 
+  /* Revenue streams: bg-stream-mrr, bg-stream-iap-soft, ... */
+  --color-stream-mrr: var(--stream-mrr);
+  --color-stream-mrr-soft: var(--stream-mrr-soft);
+  --color-stream-iap: var(--stream-iap);
+  --color-stream-iap-soft: var(--stream-iap-soft);
+  --color-stream-ads: var(--stream-ads);
+  --color-stream-ads-soft: var(--stream-ads-soft);
+
   /* --radius is 10px (controls); 2xl = 18px (cards) */
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);

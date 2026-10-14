@@ -3,7 +3,10 @@ import type { CSSProperties } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { DataTable } from "@/components/data-table"
+import { ExpenseSplit } from "@/components/dashboard/expense-split"
 import { KpiOverview } from "@/components/dashboard/kpi-overview"
+import { RevenueByApp } from "@/components/dashboard/revenue-by-app"
+import { RevenueOverview } from "@/components/dashboard/revenue-overview"
 import { WelcomeBanner } from "@/components/dashboard/welcome-banner"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -29,6 +32,15 @@ export default function DashboardPage() {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <WelcomeBanner liveApps={8} periodLabel="last 30 days" />
               <KpiOverview />
+              <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @5xl/main:grid-cols-3">
+                <div className="min-w-0 @5xl/main:col-span-2">
+                  <RevenueOverview />
+                </div>
+                <div className="flex min-w-0 flex-col gap-4 @3xl/main:grid @3xl/main:grid-cols-2 @5xl/main:flex">
+                  <RevenueByApp />
+                  <ExpenseSplit />
+                </div>
+              </div>
               <ChartAreaInteractive />
               <DataTable data={data} />
             </div>
