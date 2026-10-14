@@ -86,7 +86,7 @@ export const REVENUE_BY_APP = [
   { app: "HabitOcto", value: 78_420, color: "var(--stream-mrr)" },
   { app: "FocusPulse Pro", value: 52_180, color: "var(--stream-iap)" },
   { app: "ZenReader AI", value: 29_800, color: "var(--stream-iap-soft)" },
-  { app: "CalorieTrack", value: 24_520, color: "var(--stream-ads-soft)" },
+  { app: "SleepOcto Sounds", value: 24_520, color: "var(--stream-ads-soft)" },
 ]
 
 export const EXPENSE_SPLIT = [
