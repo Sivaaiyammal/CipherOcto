@@ -15,6 +15,7 @@ export default function DashboardPage() {
       style={
         {
           "--sidebar-width": "calc(var(--spacing) * 72)",
+          "--sidebar-width-icon": "3.5rem",
           "--header-height": "calc(var(--spacing) * 12)",
         } as CSSProperties
       }
