@@ -1,0 +1,80 @@
+// CipherOcto design tokens. Source of truth: docs/DESIGN.md.
+
+// Brand
+$primary: #0f172a;
+$primary-hover: #1e293b;
+$secondary: #065f46;
+$tertiary: #1e40af;
+$neutral: #faf8f5;
+$white: #ffffff;
+
+// Text & neutrals (slate)
+$text-heading: #0f172a;
+$text-body: #475569;
+$text-caption: #94a3b8;
+$divider: #e2e8f0;
+$slate-50: #f8fafc;
+$slate-100: #f1f5f9;
+
+$error: #ba1a1a;
+
+// Pastel domain suites: surface, hover, border, text/accent
+$suites: (
+  mint: (surface: #ecfdf5, hover: #d1fae5, border: #a7f3d0, text: #065f46),
+  blue: (surface: #eff6ff, hover: #dbeafe, border: #bfdbfe, text: #1e40af),
+  pink: (surface: #fdf2f8, hover: #fce7f3, border: #fbcfe8, text: #9d174d),
+  amber: (surface: #fefce8, hover: #fef08a, border: #fde047, text: #854d0e),
+  lavender: (surface: #f5f3ff, hover: #ede9fe, border: #ddd6fe, text: #5b21b6),
+);
+
+// Typography
+$font-family: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", system-ui, sans-serif;
+
+// name: (size, weight, line-height, letter-spacing)
+$type-scale: (
+  display-lg: (36px, 700, 44px, -0.025em),
+  display-lg-mobile: (28px, 700, 36px, -0.02em),
+  headline-lg: (28px, 700, 36px, -0.02em),
+  headline-md: (22px, 600, 30px, -0.015em),
+  headline-sm: (18px, 600, 26px, -0.01em),
+  kpi-metric: (32px, 700, 38px, -0.02em),
+  body-lg: (16px, 400, 24px, normal),
+  body-md: (14px, 400, 20px, normal),
+  body-sm: (13px, 400, 18px, normal),
+  label-md: (13px, 600, 18px, 0.01em),
+  label-sm: (11px, 700, 16px, 0.04em),
+  caption: (12px, 500, 16px, normal),
+);
+
+// Shape
+$radius-control: 0.625rem; // 10px: inputs, buttons, selects
+$radius-card: 1.125rem; // 18px: cards, stat tiles
+$radius-panel: 1.25rem; // 20px: modals, large panels
+$radius-pill: 9999px;
+
+// Spacing (8px rhythm)
+$space-xs: 0.25rem;
+$space-sm: 0.5rem;
+$space-md: 1rem;
+$space-lg: 1.5rem;
+$space-xl: 2rem;
+$gutter-sm: 0.75rem;
+$gutter: 1.25rem;
+$gutter-lg: 1.5rem;
+$margin-mobile: 1rem;
+$margin: 1.5rem;
+$margin-desktop: 2rem;
+
+// Breakpoints
+$bp-tablet: 768px;
+$bp-desktop: 1025px;
+
+// Layout
+$sidebar-width: 260px;
+$sidebar-width-collapsed: 72px;
+
+// Elevation
+$shadow-1: 0 1px 2px 0 rgba($primary, 0.04), 0 1px 3px 0 rgba($primary, 0.02);
+$shadow-2: 0 4px 6px -1px rgba($primary, 0.06), 0 2px 4px -2px rgba($primary, 0.04);
+$shadow-3: 0 20px 25px -5px rgba($primary, 0.1), 0 8px 10px -6px rgba($primary, 0.06);
+$backdrop: rgba($primary, 0.4);

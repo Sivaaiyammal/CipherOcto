@@ -1,0 +1,42 @@
+@use "sass:list";
+@use "sass:map";
+@use "tokens" as *;
+
+@mixin type($name) {
+  $t: map.get($type-scale, $name);
+  @if not $t {
+    @error "Unknown type style `#{$name}`.";
+  }
+  font-size: list.nth($t, 1);
+  font-weight: list.nth($t, 2);
+  line-height: list.nth($t, 3);
+  letter-spacing: list.nth($t, 4);
+}
+
+@mixin tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+@mixin elevation($level) {
+  @if $level == 1 {
+    box-shadow: $shadow-1;
+  } @else if $level == 2 {
+    box-shadow: $shadow-2;
+    transform: translateY(-1px);
+  } @else if $level == 3 {
+    box-shadow: $shadow-3;
+  }
+}
+
+@mixin tablet-up {
+  @media (min-width: $bp-tablet) {
+    @content;
+  }
+}
+
+@mixin desktop-up {
+  @media (min-width: $bp-desktop) {
+    @content;
+  }
+}

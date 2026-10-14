@@ -1,0 +1,103 @@
+// Emits the CSS custom properties read by shadcn components and by the
+// Tailwind @theme mapping in tailwind.css.
+@use "sass:map";
+@use "tokens" as *;
+
+:root {
+  --background: #{$neutral};
+  --foreground: #{$text-heading};
+  --card: #{$white};
+  --card-foreground: #{$text-heading};
+  --popover: #{$white};
+  --popover-foreground: #{$text-heading};
+
+  --primary: #{$primary};
+  --primary-hover: #{$primary-hover};
+  --primary-foreground: #{$white};
+  --secondary: #{$secondary};
+  --secondary-foreground: #{$white};
+  --tertiary: #{$tertiary};
+  --tertiary-foreground: #{$white};
+
+  --muted: #{$slate-100};
+  --muted-foreground: #{$text-body};
+  --subtle-foreground: #{$text-caption};
+  --accent: #{$slate-100};
+  --accent-foreground: #{$text-heading};
+  --destructive: #{$error};
+
+  --border: #{$divider};
+  --input: #{$divider};
+  --ring: #{$primary};
+  --radius: #{$radius-control};
+
+  --chart-1: #{$tertiary};
+  --chart-2: #{$secondary};
+  --chart-3: #{map.get($suites, lavender, text)};
+  --chart-4: #{map.get($suites, pink, text)};
+  --chart-5: #{map.get($suites, amber, text)};
+
+  // Navigation shell is deep navy (DESIGN.md › Architectural Anchoring)
+  --sidebar: #{$primary};
+  --sidebar-foreground: #{$divider};
+  --sidebar-primary: #{$white};
+  --sidebar-primary-foreground: #{$primary};
+  --sidebar-accent: #{$primary-hover};
+  --sidebar-accent-foreground: #{$white};
+  --sidebar-border: #{$primary-hover};
+  --sidebar-ring: #{$text-caption};
+
+  @each $name, $suite in $suites {
+    --#{$name}: #{map.get($suite, text)};
+    --#{$name}-surface: #{map.get($suite, surface)};
+    --#{$name}-hover: #{map.get($suite, hover)};
+    --#{$name}-border: #{map.get($suite, border)};
+  }
+
+  --shadow-1: #{$shadow-1};
+  --shadow-2: #{$shadow-2};
+  --shadow-3: #{$shadow-3};
+}
+
+.dark {
+  --background: #0b1120;
+  --foreground: #{$neutral};
+  --card: #{$primary};
+  --card-foreground: #{$neutral};
+  --popover: #{$primary};
+  --popover-foreground: #{$neutral};
+
+  --primary: #{$neutral};
+  --primary-hover: #{$divider};
+  --primary-foreground: #{$primary};
+  --secondary: #34d399;
+  --secondary-foreground: #022c22;
+  --tertiary: #60a5fa;
+  --tertiary-foreground: #172554;
+
+  --muted: #{$primary-hover};
+  --muted-foreground: #{$text-caption};
+  --subtle-foreground: #64748b;
+  --accent: #{$primary-hover};
+  --accent-foreground: #{$neutral};
+  --destructive: #f87171;
+
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #{$text-caption};
+
+  --chart-1: #60a5fa;
+  --chart-2: #34d399;
+  --chart-3: #a78bfa;
+  --chart-4: #f472b6;
+  --chart-5: #facc15;
+
+  --sidebar: #020617;
+  --sidebar-foreground: #{$divider};
+  --sidebar-primary: #{$neutral};
+  --sidebar-primary-foreground: #{$primary};
+  --sidebar-accent: #{$primary};
+  --sidebar-accent-foreground: #{$white};
+  --sidebar-border: #{$primary};
+  --sidebar-ring: #64748b;
+}

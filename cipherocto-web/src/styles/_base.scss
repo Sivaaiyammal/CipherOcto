@@ -1,0 +1,19 @@
+@use "tokens" as *;
+@use "mixins" as *;
+
+// Inside @layer base so Tailwind utilities still take precedence.
+@layer base {
+  body {
+    @include type(body-md);
+    font-family: $font-family;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  // Tabular numerals are mandatory for data (DESIGN.md › Typography)
+  table,
+  [data-slot="chart"],
+  [data-slot="card-title"] {
+    @include tabular-nums;
+  }
+}
