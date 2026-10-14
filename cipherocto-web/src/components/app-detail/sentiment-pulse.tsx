@@ -2,7 +2,20 @@ import { MessageSquareHeartIcon, StarIcon, TriangleAlertIcon } from "lucide-reac
 
 import type { SentimentInsights } from "@/data/app-insights"
 
-export function SentimentPulse({ sentiment, version }: { sentiment: SentimentInsights; version: string }) {
+export function SentimentPulse({ sentiment, version }: { sentiment: SentimentInsights | null; version: string }) {
+  if (!sentiment) {
+    return (
+      <section className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card p-5 shadow-[var(--shadow-1)] lg:p-6">
+        <h2 className="flex items-center gap-2 text-lg leading-[26px] font-semibold tracking-[-0.01em] text-foreground">
+          <MessageSquareHeartIcon className="size-4.5 text-mint" />
+          User Sentiment Pulse
+        </h2>
+        <p className="rounded-xl bg-background p-4 text-[13px] text-muted-foreground">
+          No store reviews yet for v{version}. Sentiment appears once the first ratings arrive from App Store and Google Play.
+        </p>
+      </section>
+    )
+  }
   const { positive, neutral, negative, review, issue } = sentiment
 
   return (

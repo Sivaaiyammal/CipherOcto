@@ -67,7 +67,7 @@ export function AppKpis({ app, detail }: { app: PortfolioApp; detail: AppDetail 
         tone="blue"
         value={formatCompact(app.mau)}
         unit="MAU"
-        delta={{ label: "+12.1%", icon: <TrendingUpIcon /> }}
+        delta={{ label: app.mau ? "+12.1%" : "New", icon: <TrendingUpIcon /> }}
         trend={detail.trends.audience}
         breakdown={[
           { label: "DAU", value: formatCompact(detail.dau) },

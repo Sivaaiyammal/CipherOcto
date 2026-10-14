@@ -90,7 +90,7 @@ export function MonetizationPulse({ app, detail }: { app: PortfolioApp; detail: 
     return {
       peak,
       total,
-      weekendVelocity: (weekend / weekday - 1) * 100,
+      weekendVelocity: weekday ? (weekend / weekday - 1) * 100 : 0,
       releaseLift: before ? (after / before - 1) * 100 : 0,
       release: data[releaseIdx],
       // Keep the annotation inside the plot: put it left of the marker late in the range

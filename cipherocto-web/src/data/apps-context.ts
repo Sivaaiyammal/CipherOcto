@@ -7,6 +7,8 @@ export type AppsStore = {
   getApp: (id: string | undefined) => PortfolioApp | undefined
   /** Advance a staged rollout one step (10 → 25 → 50 → 100 → live). */
   promote: (id: string) => void
+  /** Register a new app in the portfolio (from the Register New App wizard). */
+  addApp: (app: PortfolioApp) => void
 }
 
 export const AppsContext = React.createContext<AppsStore | null>(null)

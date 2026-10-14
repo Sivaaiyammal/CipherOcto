@@ -45,7 +45,9 @@ export function getCatalog(app: PortfolioApp, detail: AppDetail): CatalogSku[] {
   // annual price that reproduces the app's MRR from its subscriber mix:
   //   annualSubs * Pa/12 + monthlySubs * k * Pa/12 = mrr
   const k = between(rand, 1.8, 2.2)
-  const annualPrice = storePrice((12 * detail.mrr) / (annualSubs + k * monthlySubs))
+  const mix = annualSubs + k * monthlySubs
+  // New apps have no subscribers yet: fall back to list prices
+  const annualPrice = mix > 0 ? storePrice((12 * detail.mrr) / mix) : 49.99
   const monthlyPrice = storePrice((k * annualPrice) / 12)
   const annualRevenue = (annualSubs * annualPrice) / 12
   const monthlyRevenue = monthlySubs * monthlyPrice
@@ -75,7 +77,7 @@ export function getCatalog(app: PortfolioApp, detail: AppDetail): CatalogSku[] {
       volume: `${annualSubs.toLocaleString("en-US")} active`,
       volumeNote: `+${Math.round(annualSubs * between(rand, 0.04, 0.07)).toLocaleString("en-US")} this week`,
       monthlyRevenue: annualRevenue,
-      revenueShare: (annualRevenue / total) * 100,
+      revenueShare: total ? (annualRevenue / total) * 100 : 0,
       apple,
       android,
     },
@@ -91,7 +93,7 @@ export function getCatalog(app: PortfolioApp, detail: AppDetail): CatalogSku[] {
       volume: `${monthlySubs.toLocaleString("en-US")} active`,
       volumeNote: "Steady retention",
       monthlyRevenue,
-      revenueShare: (monthlyRevenue / total) * 100,
+      revenueShare: total ? (monthlyRevenue / total) * 100 : 0,
       apple,
       android,
     },
@@ -106,7 +108,7 @@ export function getCatalog(app: PortfolioApp, detail: AppDetail): CatalogSku[] {
       volume: `${lifetimeUnits.toLocaleString("en-US")} sold`,
       volumeNote: "This 30d window",
       monthlyRevenue: lifetimeRevenue,
-      revenueShare: (lifetimeRevenue / total) * 100,
+      revenueShare: total ? (lifetimeRevenue / total) * 100 : 0,
       apple,
       android,
     },
@@ -121,7 +123,7 @@ export function getCatalog(app: PortfolioApp, detail: AppDetail): CatalogSku[] {
       volume: `${packUnits.toLocaleString("en-US")} units`,
       volumeNote: `+${Math.round(packUnits * 0.2).toLocaleString("en-US")} viral shares`,
       monthlyRevenue: packRevenue,
-      revenueShare: (packRevenue / total) * 100,
+      revenueShare: total ? (packRevenue / total) * 100 : 0,
       apple,
       android,
     },
@@ -251,7 +253,8 @@ export type SentimentInsights = {
   issue: { title: string; reports: number; note: string }
 }
 
-export function getSentiment(app: PortfolioApp, nextBuild: { version: string; build: number }): SentimentInsights {
+export function getSentiment(app: PortfolioApp, nextBuild: { version: string; build: number }): SentimentInsights | null {
+  if (app.ratingCount === 0) return null
   const rand = seededRandom(`${app.id}:sentiment`)
   const positive = Math.round(Math.min(97, 60 + (app.rating - 4) * 38))
   const negative = Math.max(1, Math.round((100 - positive) * between(rand, 0.25, 0.4)))

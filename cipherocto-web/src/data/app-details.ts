@@ -66,7 +66,9 @@ export function getAppDetail(app: PortfolioApp): AppDetail {
   const stickiness = between(rand, 0.18, 0.32)
   const sessions = app.mau * between(rand, 1.15, 1.4)
   const crashes = Math.round(sessions * ((100 - app.crashFree) / 100))
-  const paywallConversion = between(rand, 3.2, 6.4)
+  const hasUsers = app.mau > 0
+  const hasReviews = app.ratingCount > 0
+  const paywallConversion = hasUsers ? between(rand, 3.2, 6.4) : 0
 
   const capabilities: AppDetail["capabilities"] = []
   if (onApple) capabilities.push({ label: "StoreKit 2 Enabled", tone: "blue" })
@@ -97,11 +99,11 @@ export function getAppDetail(app: PortfolioApp): AppDetail {
     sessions,
     crashes,
     anrRate: round((100 - app.crashFree) / between(rand, 2.5, 4), 2),
-    iosRating: onApple ? round(Math.min(5, app.rating + between(rand, 0, 0.06))) : null,
-    androidRating: onAndroid ? round(Math.min(5, app.rating - between(rand, 0, 0.06))) : null,
+    iosRating: onApple && hasReviews ? round(Math.min(5, app.rating + between(rand, 0, 0.06))) : null,
+    androidRating: onAndroid && hasReviews ? round(Math.min(5, app.rating - between(rand, 0, 0.06))) : null,
     ratingDelta: round(between(rand, 0.02, 0.12)),
     paywallConversion: round(paywallConversion, 1),
-    paywallUplift: round(between(rand, 0.2, 0.9), 1),
+    paywallUplift: hasUsers ? round(between(rand, 0.2, 0.9), 1) : 0,
     paywallVariant: `V${Math.floor(between(rand, 2, 6))}`,
     weeklyTrials: Math.round(app.subscribers * between(rand, 0.1, 0.14)),
     trialToPaid: Math.round(between(rand, 62, 78)),
@@ -112,10 +114,10 @@ export function getAppDetail(app: PortfolioApp): AppDetail {
     releaseDaysAgo: Math.floor(between(rand, 5, 12)),
     capabilities,
     trends: {
-      revenue: walk(rand, 14, 40, 1.4, 4),
-      audience: walk(rand, 14, 30, 1.1, 3),
+      revenue: hasUsers ? walk(rand, 14, 40, 1.4, 4) : Array(14).fill(0),
+      audience: hasUsers ? walk(rand, 14, 30, 1.1, 3) : Array(14).fill(0),
       stability: walk(rand, 14, app.crashFree - 0.08, 0.006, 0.03),
-      paywall: walk(rand, 14, paywallConversion - 0.6, 0.05, 0.3),
+      paywall: hasUsers ? walk(rand, 14, paywallConversion - 0.6, 0.05, 0.3) : Array(14).fill(0),
     },
   }
 }

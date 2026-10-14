@@ -11,6 +11,7 @@ export function AppsProvider({ children }: { children: React.ReactNode }) {
     () => ({
       apps,
       getApp: (id) => apps.find((a) => a.id === id),
+      addApp: (app) => setApps((prev) => [...prev, app]),
       promote: (id) =>
         setApps((prev) =>
           prev.map((a) => {

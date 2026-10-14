@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import {
   CirclePlusIcon,
   FileSpreadsheetIcon,
@@ -43,13 +44,16 @@ export function WelcomeBanner({
 
       <div className="flex max-w-xl flex-wrap items-center gap-2.5 @3xl/main:justify-end">
         <Button
+          asChild
           className={cn(
             actionBase,
             "bg-primary text-primary-foreground hover:bg-primary/90"
           )}
         >
-          <CirclePlusIcon className="text-mint-border" />
-          Add App
+          <Link to="/apps/new">
+            <CirclePlusIcon className="text-mint-border" />
+            Add App
+          </Link>
         </Button>
         <Button
           variant="ghost"

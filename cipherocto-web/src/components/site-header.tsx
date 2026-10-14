@@ -274,7 +274,7 @@ export function SiteHeader() {
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
                   <BreadcrumbPage className="font-semibold">
-                    {app?.name ?? "Unknown app"}
+                    {appMatch.params.appId === "new" ? "Register New App" : (app?.name ?? "Unknown app")}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
               </>

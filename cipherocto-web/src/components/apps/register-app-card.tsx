@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import { PlusIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -16,10 +17,18 @@ export function RegisterAppCard({ slotsLeft }: { slotsLeft: number }) {
         </p>
       </div>
       <div className="flex flex-col items-center gap-2 pt-2">
-        <Button className="h-10 rounded-xl px-4 text-[13px] font-semibold shadow-[var(--shadow-1)]" disabled={slotsLeft <= 0}>
-          <PlusIcon />
-          Setup App In 3 Minutes
-        </Button>
+        {slotsLeft > 0 ? (
+          <Button asChild className="h-10 rounded-xl px-4 text-[13px] font-semibold shadow-[var(--shadow-1)]">
+            <Link to="/apps/new">
+              <PlusIcon />
+              Setup App In 3 Minutes
+            </Link>
+          </Button>
+        ) : (
+          <Button className="h-10 rounded-xl px-4 text-[13px] font-semibold" disabled>
+            Quota reached
+          </Button>
+        )}
         <p className="text-xs text-muted-foreground tabular-nums">
           {slotsLeft} slot{slotsLeft === 1 ? "" : "s"} remaining in Octo Corp Enterprise
         </p>

@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Link } from "react-router-dom"
 import {
   ArrowRightLeftIcon,
   ArrowUpDownIcon,
@@ -139,11 +140,21 @@ export default function AppsPage() {
             </span>
           </Button>
           <Button
+            asChild={slotsLeft > 0}
             className="h-10 rounded-xl px-4 text-[13px] font-semibold shadow-[var(--shadow-2)] active:scale-[0.98]"
             disabled={slotsLeft <= 0}
           >
-            <CirclePlusIcon />
-            Register New App
+            {slotsLeft > 0 ? (
+              <Link to="/apps/new">
+                <CirclePlusIcon />
+                Register New App
+              </Link>
+            ) : (
+              <>
+                <CirclePlusIcon />
+                Register New App
+              </>
+            )}
           </Button>
         </div>
       </section>
