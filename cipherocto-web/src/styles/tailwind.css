@@ -28,6 +28,8 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-tertiary: var(--tertiary);
   --color-tertiary-foreground: var(--tertiary-foreground);
+  --color-neutral-strong: var(--neutral-strong);
+  --color-neutral-deep: var(--neutral-deep);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-subtle-foreground: var(--subtle-foreground);

@@ -32,12 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-
-const currentUser = {
-  name: "Elena Rostova",
-  role: "Lead Admin",
-  avatar: "",
-}
+import { currentUser } from "@/lib/current-user"
 
 const DATE_PRESETS = [
   { id: "7d", label: "Last 7 Days", days: 7 },

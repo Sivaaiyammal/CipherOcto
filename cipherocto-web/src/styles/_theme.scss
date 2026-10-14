@@ -19,6 +19,8 @@
   --tertiary: #{$tertiary};
   --tertiary-foreground: #{$white};
 
+  --neutral-strong: #{$neutral-strong};
+  --neutral-deep: #{$neutral-deep};
   --muted: #{$slate-100};
   --muted-foreground: #{$text-body};
   --subtle-foreground: #{$text-caption};
@@ -75,6 +77,8 @@
   --tertiary: #60a5fa;
   --tertiary-foreground: #172554;
 
+  --neutral-strong: #{$primary-hover};
+  --neutral-deep: #334155;
   --muted: #{$primary-hover};
   --muted-foreground: #{$text-caption};
   --subtle-foreground: #64748b;
