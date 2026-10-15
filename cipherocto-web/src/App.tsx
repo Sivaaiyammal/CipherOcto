@@ -9,6 +9,7 @@ import { AuthProvider } from '@/data/auth-provider'
 import AnalyticsPage from '@/pages/analytics'
 import AppDetailPage from '@/pages/apps/app-detail'
 import AppsPage from '@/pages/apps'
+import BillingSetupPage from '@/pages/billing'
 import RegisterAppPage from '@/pages/apps/register'
 import ProjectsPage from '@/pages/projects'
 import DashboardPage from '@/pages/dashboard'
@@ -40,6 +41,9 @@ function App() {
                   </Route>
                   <Route element={<RequirePermission permission="apps:write" />}>
                     <Route path="apps/new" element={<RegisterAppPage />} />
+                  </Route>
+                  <Route element={<RequirePermission permission="apps:read" />}>
+                    <Route path="billing" element={<BillingSetupPage />} />
                   </Route>
                   <Route element={<RequirePermission permission="config:read" />}>
                     <Route path="remote-config" element={<RemoteConfigPage />} />

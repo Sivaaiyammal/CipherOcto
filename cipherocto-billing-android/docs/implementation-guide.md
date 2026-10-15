@@ -18,12 +18,12 @@ or finance role), and a signed-in user concept in your app (any stable user id).
 3. Keep the product ID: you'll map it in A3.
 
 ### A2. Register the app and create an SDK key
-1. Dashboard → **Apps → Register app**. Package name must equal the Play listing's.
-2. Dashboard → app → **SDK keys → Create**. Copy the `octo_sdk_…` value (shown once).
+1. Dashboard → **Billing Setup → Register app**. Package name must equal the Play listing's.
+2. Billing Setup → select the app → **SDK keys → Create key**. Copy the `octo_sdk_…` value (shown once).
    One key per app and environment; revoke it from the dashboard if it leaks.
 
 ### A3. Map product → entitlement
-Dashboard → app → **Products → Add**: product `pro_monthly`, entitlement key `premium`.
+Billing Setup → select the app → **Products → Add product**: product `pro_monthly`, entitlement key `premium`.
 The entitlement key is what your code checks; several products can unlock the same key
 (monthly + yearly → `premium`).
 
@@ -34,7 +34,7 @@ The entitlement key is what your code checks; several products can unlock the sa
 4. Real-time notifications: Play Console → **Monetize setup → Real-time developer notifications** → a Pub/Sub topic; create a **push** subscription to
    `https://<api>/api/v1/webhooks/google-play` with OIDC auth, and set `RTDN_AUDIENCE` / `RTDN_SERVICE_ACCOUNT_EMAIL` on the API.
 
-**Check:** `GET /api/v1/admin/subscriptions/summary` returns data; with no service account
+**Check:** Billing Setup → **Integration health** shows "Purchase verification: Configured"; with no service account
 configured, verification returns 503 (by design — nothing unlocks unverified).
 
 ---
@@ -198,7 +198,7 @@ is observable quickly. Local backend: use `http://10.0.2.2:4000` as `baseUrl` wi
 ## Part D. Go-live checklist
 
 - [ ] Service account has Play permissions; verification works against a real tester purchase.
-- [ ] RTDN push subscription delivers (dashboard → Subscriptions → Events shows entries).
+- [ ] RTDN push subscription delivers (Billing Setup → Integration health → Recent events shows entries).
 - [ ] SDK key is the production key, injected from CI, not committed.
 - [ ] `baseUrl` is `https://` (the SDK rejects cleartext outside localhost/emulator).
 - [ ] App calls `refresh()` on start and resume, and `setSubject(null)` on logout.
