@@ -34,7 +34,7 @@ Sign in with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`, or, while
 `DEMO_LOGIN=true`, choose a role on the login page.
 
 ```bash
-npm test            # 31 tests, embedded MongoDB, never touches Atlas
+npm test            # 99 tests, embedded MongoDB, never touches Atlas
 npm run typecheck
 ```
 
@@ -52,6 +52,8 @@ src/
     auth/           login, sessions, throttling, password change
     users/          team members and role assignment
     audit/          append-only security log
+    apps/           app registry (unique package names) and per-app SDK keys
+    subscriptions/  products, purchase verification, entitlements, RTDN, reconcile
   db/               models.ts, migrate.ts (+ migrations)
   shared/           errors, crypto, auth context
 ```
@@ -79,6 +81,16 @@ the reserved mobile-SDK surface (`/sdk/*`), which will get its own auth and limi
 | POST | `/api/v1/admin/users` | `team:manage` |
 | PATCH | `/api/v1/admin/users/:id` | `team:manage` |
 | GET | `/api/v1/admin/audit` | `audit:read` |
+| GET/POST | `/api/v1/admin/apps` | `apps:read` / `apps:write` |
+| GET/PATCH | `/api/v1/admin/apps/:appId` | `apps:read` / `apps:write` |
+| GET/POST/DELETE | `/api/v1/admin/apps/:appId/sdk-keys[/:keyId]` | `apps:write` |
+| GET/POST/PATCH | `/api/v1/admin/apps/:appId/products[/:id]` | `subscriptions:read` / `:write` |
+| GET | `/api/v1/admin/apps/:appId/subscriptions/summary` · `/events` | `subscriptions:read` |
+| POST | `/api/v1/admin/subscriptions/reconcile` | `subscriptions:write` |
+| GET | `/api/v1/sdk/products` | SDK key |
+| POST | `/api/v1/sdk/purchases/verify` · `/sync` | SDK key |
+| GET | `/api/v1/sdk/entitlements?subjectId=` | SDK key |
+| POST | `/api/v1/webhooks/google-play` | Pub/Sub OIDC token |
 
 Errors always look like `{ error, message, requestId, … }`.
 
@@ -133,6 +145,19 @@ controls; that is UX only — the server enforces every rule.
 - Back up MongoDB and test a restore.
 - `docker-compose.yml` runs MongoDB + the API; put Nginx in front for TLS.
 
+## Subscriptions
+
+One backend and one SDK contract for every app. See
+[`docs/subscriptions.md`](docs/subscriptions.md) for the purchase flow, how to wire
+Google Play (service account, RTDN), and what an SDK client must do.
+
+- Access is granted **only** after the backend verifies the purchase token with the
+  Google Play Developer API; a client reporting success is never enough.
+- With no `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` the API **fails closed** (`503`).
+- Purchase tokens are stored as a SHA-256 plus AES-256-GCM ciphertext
+  (`PURCHASE_TOKEN_KEY`) and never appear in any response or log.
+- Verification, RTDN and reconciliation share one idempotent code path.
+
 ## Known limits (deliberate, for now)
 
 - The "last admin" check is count-then-write, so two simultaneous demotions of
@@ -140,3 +165,6 @@ controls; that is UX only — the server enforces every rule.
   transaction (replica set) if admin changes become concurrent.
 - Per-IP request limiting (`@fastify/rate-limit`) is in memory per instance.
 - No refresh/idle timeout yet: sessions expire at a fixed time.
+- Subscriptions only; one-time in-app products and Apple/Stripe are not modelled.
+- Real Google verification and RTDN delivery are untested here (no Play credentials
+  yet); everything else is covered against a faithful fake of Google's responses.

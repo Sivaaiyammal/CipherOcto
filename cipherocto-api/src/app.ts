@@ -5,14 +5,19 @@ import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from "fas
 import { envSchema, toConfig, type Config, type RawEnv } from "./config.ts"
 import { accessRoutes } from "./modules/access/access.routes.ts"
 import { auditRoutes } from "./modules/audit/audit.routes.ts"
+import { appsRoutes } from "./modules/apps/apps.routes.ts"
 import { authRoutes } from "./modules/auth/auth.routes.ts"
+import { sdkRoutes } from "./modules/subscriptions/sdk.routes.ts"
+import { subscriptionsAdminRoutes } from "./modules/subscriptions/subscriptions.admin.routes.ts"
+import { webhookRoutes } from "./modules/subscriptions/webhook.routes.ts"
 import { usersRoutes } from "./modules/users/users.routes.ts"
 import { connectDatabase, type Database } from "./plugins/database.ts"
 import { registerRequestAuth } from "./plugins/auth.ts"
 import { registerDocs } from "./plugins/docs.ts"
 import { registerErrorHandling } from "./plugins/errors.ts"
 import { registerSecurity } from "./plugins/security.ts"
-import { createServices, type Services } from "./services.ts"
+import { createSdkGuard } from "./plugins/sdk-auth.ts"
+import { createServices, type Overrides, type Services } from "./services.ts"
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -33,7 +38,7 @@ declare module "fastify" {
  *   /api/v1/admin/*           dashboard administration (own auth + schemas)
  *   /api/v1/sdk/*             reserved for the mobile SDK (separate auth & limits)
  */
-export async function buildApp(opts: { env?: Record<string, string | undefined> } = {}): Promise<FastifyInstance> {
+export async function buildApp(opts: { env?: Record<string, string | undefined> } & Overrides = {}): Promise<FastifyInstance> {
   const env = opts.env ?? process.env
   const isTest = env.NODE_ENV === "test"
 
@@ -75,7 +80,7 @@ export async function buildApp(opts: { env?: Record<string, string | undefined> 
   app.decorate("db", database)
   app.addHook("onClose", async () => database.close())
 
-  const services = createServices(config, database.models, app.log)
+  const services = createServices(config, database.models, app.log, { verifier: opts.verifier, pushAuth: opts.pushAuth })
   await services.access.syncSystemRoles()
   app.decorate("services", services)
 
@@ -95,11 +100,25 @@ export async function buildApp(opts: { env?: Record<string, string | undefined> 
       await v1.register(
         async (admin) => {
           await admin.register(usersRoutes, { users: services.users })
+          await admin.register(appsRoutes, { apps: services.apps })
+          await admin.register(subscriptionsAdminRoutes, { subscriptions: services.subscriptions })
           await admin.register(accessRoutes, { access: services.access })
           await admin.register(auditRoutes, { audit: services.audit })
         },
         { prefix: "/admin" }
       )
+
+      // Public mobile-SDK surface: authenticated by per-app key, not by session.
+      const sdkGuard = createSdkGuard(app, (key) => services.apps.resolveSdkKey(key))
+      await v1.register(sdkRoutes, { prefix: "/sdk", subscriptions: services.subscriptions, guard: sdkGuard })
+
+      // Google Play RTDN (Pub/Sub push), authenticated by an OIDC token.
+      await v1.register(webhookRoutes, {
+        prefix: "/webhooks",
+        subscriptions: services.subscriptions,
+        pushAuth: services.pushAuth,
+        config,
+      })
     },
     { prefix: "/api/v1" }
   )

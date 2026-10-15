@@ -144,7 +144,7 @@ export class AuthService {
     const user = await this.users.byId(session.userId)
     if (!user || user.status !== "active") return null
 
-    if (Date.now() - session.lastSeenAt.getTime() > TOUCH_INTERVAL_MS) void this.sessions.touch(id)
+    if (Date.now() - session.lastSeenAt.getTime() > TOUCH_INTERVAL_MS) void this.sessions.touch(id).catch(() => undefined) // best-effort bookkeeping; must never reject unhandled
 
     return { user, permissions: new Set(await this.access.permissionsFor(user.roleId)), sessionId: id }
   }

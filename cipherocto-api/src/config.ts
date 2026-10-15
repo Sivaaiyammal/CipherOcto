@@ -29,6 +29,20 @@ export const envSchema = {
     DEMO_LOGIN: { type: "boolean" },
     /** Serve OpenAPI docs at /api/v1/docs. Off by default in production. */
     API_DOCS: { type: "boolean" },
+    /**
+     * 32 random bytes, base64. Encrypts stored purchase tokens at rest. Generate with:
+     *   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+     * Losing it makes stored tokens unreadable (reconciliation then needs a fresh sync).
+     */
+    PURCHASE_TOKEN_KEY: { type: "string" },
+    /** Google Play Developer API service account: the JSON, or the JSON base64-encoded. */
+    GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: { type: "string" },
+    /** Pub/Sub push subscription URL; the OIDC token's audience must equal it. */
+    RTDN_AUDIENCE: { type: "string" },
+    /** Service account the Pub/Sub push subscription authenticates as. */
+    RTDN_SERVICE_ACCOUNT_EMAIL: { type: "string" },
+    /** How often to re-verify stale purchases against Google. 0 disables the scheduler. */
+    RECONCILE_INTERVAL_MINUTES: { type: "number", minimum: 0, default: 60 },
     SEED_ADMIN_EMAIL: { type: "string" },
     SEED_ADMIN_PASSWORD: { type: "string" },
     SEED_ADMIN_NAME: { type: "string", default: "Workspace Admin" },
@@ -50,6 +64,11 @@ export type RawEnv = {
   LOGIN_WINDOW_MINUTES: number
   DEMO_LOGIN?: boolean
   API_DOCS?: boolean
+  PURCHASE_TOKEN_KEY?: string
+  GOOGLE_PLAY_SERVICE_ACCOUNT_JSON?: string
+  RTDN_AUDIENCE?: string
+  RTDN_SERVICE_ACCOUNT_EMAIL?: string
+  RECONCILE_INTERVAL_MINUTES: number
   SEED_ADMIN_EMAIL?: string
   SEED_ADMIN_PASSWORD?: string
   SEED_ADMIN_NAME: string
@@ -70,6 +89,13 @@ export type Config = {
   loginWindowMs: number
   demoLogin: boolean
   docsEnabled: boolean
+  /** Raw 32-byte key for encrypting purchase tokens. */
+  purchaseTokenKey: Buffer
+  /** Null until a Play service account is configured; verification then answers 503. */
+  googleServiceAccount: Record<string, unknown> | null
+  /** Null until both values are set; the webhook then answers 503 instead of accepting pushes. */
+  rtdn: { audience: string; serviceAccountEmail: string } | null
+  reconcileIntervalMs: number
   seedAdmin: { email: string; password: string; name: string } | null
 }
 
@@ -87,6 +113,29 @@ export function toConfig(e: RawEnv): Config {
     throw new Error("SEED_ADMIN_PASSWORD must be at least 10 characters.")
   }
 
+  if (!e.PURCHASE_TOKEN_KEY) {
+    throw new Error("PURCHASE_TOKEN_KEY is required (32 random bytes, base64). See .env.example.")
+  }
+  const purchaseTokenKey = Buffer.from(e.PURCHASE_TOKEN_KEY, "base64")
+  if (purchaseTokenKey.length !== 32) {
+    throw new Error("PURCHASE_TOKEN_KEY must decode to exactly 32 bytes.")
+  }
+
+  let googleServiceAccount: Record<string, unknown> | null = null
+  if (e.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON) {
+    const raw = e.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON.trim()
+    try {
+      googleServiceAccount = JSON.parse(raw.startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8"))
+    } catch {
+      // Never echo the value: it contains a private key.
+      throw new Error("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is not valid JSON (or base64 JSON).")
+    }
+  }
+
+  if (Boolean(e.RTDN_AUDIENCE) !== Boolean(e.RTDN_SERVICE_ACCOUNT_EMAIL)) {
+    throw new Error("Set both RTDN_AUDIENCE and RTDN_SERVICE_ACCOUNT_EMAIL, or neither.")
+  }
+
   return {
     env: e.NODE_ENV,
     port: e.PORT,
@@ -102,6 +151,13 @@ export function toConfig(e: RawEnv): Config {
     loginWindowMs: e.LOGIN_WINDOW_MINUTES * 60_000,
     demoLogin,
     docsEnabled: e.API_DOCS ?? !production,
+    purchaseTokenKey,
+    googleServiceAccount,
+    rtdn:
+      e.RTDN_AUDIENCE && e.RTDN_SERVICE_ACCOUNT_EMAIL
+        ? { audience: e.RTDN_AUDIENCE, serviceAccountEmail: e.RTDN_SERVICE_ACCOUNT_EMAIL }
+        : null,
+    reconcileIntervalMs: e.RECONCILE_INTERVAL_MINUTES * 60_000,
     seedAdmin:
       e.SEED_ADMIN_EMAIL && e.SEED_ADMIN_PASSWORD
         ? { email: e.SEED_ADMIN_EMAIL.trim().toLowerCase(), password: e.SEED_ADMIN_PASSWORD, name: e.SEED_ADMIN_NAME }

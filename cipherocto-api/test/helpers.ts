@@ -8,8 +8,11 @@ import type { RoleId } from "../src/modules/access/permissions.ts"
 import { hashPassword } from "../src/shared/crypto.ts"
 import { SESSION_COOKIE } from "../src/shared/session-cookie.ts"
 import { seedDatabase } from "../src/seed.ts"
+import type { Overrides } from "../src/services.ts"
 
 export const PASSWORD = "correct-horse-battery"
+/** 32 zero bytes, base64 — fine for tests, never for real data. */
+export const TEST_TOKEN_KEY = Buffer.alloc(32, 7).toString("base64")
 export const ORIGIN = "http://localhost:5173"
 export const API = "/api/v1"
 
@@ -20,14 +23,17 @@ afterEach(async () => {
   await Promise.all(open.splice(0).map((a) => a.close()))
 })
 
-export async function setup(env: Record<string, string> = {}, opts: { demo?: boolean } = {}) {
+export async function setup(env: Record<string, string> = {}, opts: { demo?: boolean } & Overrides = {}) {
   const app = await buildApp({
+    verifier: opts.verifier,
+    pushAuth: opts.pushAuth,
     env: {
       NODE_ENV: "test",
       MONGODB_URI: inject("mongoUri"),
       MONGODB_DB: `t_${randomUUID().replaceAll("-", "").slice(0, 14)}`,
       DEMO_LOGIN: opts.demo ? "true" : "false",
       WEB_ORIGINS: ORIGIN,
+      PURCHASE_TOKEN_KEY: TEST_TOKEN_KEY,
       ...env,
     },
   })

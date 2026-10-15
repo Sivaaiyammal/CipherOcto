@@ -15,6 +15,8 @@ const rawEnv = (over: Partial<RawEnv> = {}): RawEnv => ({
   REMEMBER_TTL_DAYS: 30,
   LOGIN_MAX_ATTEMPTS: 5,
   LOGIN_WINDOW_MINUTES: 15,
+  RECONCILE_INTERVAL_MINUTES: 60,
+  PURCHASE_TOKEN_KEY: Buffer.alloc(32, 1).toString("base64"),
   SEED_ADMIN_NAME: "Admin",
   ...over,
 })

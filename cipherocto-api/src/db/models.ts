@@ -138,7 +138,124 @@ export function createModels(conn: Connection) {
     )
   )
 
-  return { User, Session, Role, AuditLog, Throttle }
+  // ── App portfolio ──────────────────────────────────────────────────────
+  const App = conn.model(
+    "App",
+    new Schema(
+      {
+        name: { type: String, required: true, trim: true },
+        packageName: { type: String, required: true, trim: true },
+        platform: { type: String, enum: ["android"], default: "android" },
+        status: {
+          type: String,
+          enum: ["development", "testing", "production", "maintenance", "archived"],
+          default: "development",
+        },
+        owner: { type: String, default: "" },
+        techStack: { type: String, default: "" },
+        playConsoleUrl: { type: String, default: "" },
+      },
+      { ...opts, timestamps: true, collection: "apps" }
+    )
+  )
+
+  // The SDK key's SHA-256 is the _id, so a leaked database can't be used to call the API.
+  const SdkKey = conn.model(
+    "SdkKey",
+    new Schema(
+      {
+        _id: { type: String },
+        appId: { type: Schema.Types.ObjectId, required: true },
+        prefix: { type: String, required: true },
+        label: { type: String, default: "" },
+        createdBy: { type: String, default: null },
+        lastUsedAt: { type: Date, default: null },
+        revokedAt: { type: Date, default: null },
+      },
+      { ...opts, timestamps: { createdAt: true, updatedAt: false }, collection: "app_sdk_keys" }
+    )
+  )
+
+  // ── Subscriptions ──────────────────────────────────────────────────────
+  const Product = conn.model(
+    "SubscriptionProduct",
+    new Schema(
+      {
+        appId: { type: Schema.Types.ObjectId, required: true },
+        /** The Play Console subscription id. CipherOcto maps it; it never creates it. */
+        productId: { type: String, required: true, trim: true },
+        entitlement: { type: String, required: true, trim: true },
+        displayName: { type: String, required: true, trim: true },
+        description: { type: String, default: "" },
+        status: { type: String, enum: ["draft", "active", "archived"], default: "draft" },
+      },
+      { ...opts, timestamps: true, collection: "subscription_products" }
+    )
+  )
+
+  const Purchase = conn.model(
+    "PurchaseRecord",
+    new Schema(
+      {
+        appId: { type: Schema.Types.ObjectId, required: true },
+        subjectId: { type: String, required: true },
+        productId: { type: String, required: true },
+        /** SHA-256 of the purchase token: the lookup key. The token itself is never a public id. */
+        tokenHash: { type: String, required: true },
+        /** AES-256-GCM ciphertext, kept only so reconciliation can re-query Google. */
+        tokenCipher: { type: String, required: true },
+        state: {
+          type: String,
+          enum: ["pending", "active", "canceled", "grace", "on_hold", "paused", "expired", "revoked"],
+          required: true,
+        },
+        playState: { type: String, default: "" },
+        expiresAt: { type: Date, default: null },
+        autoRenewing: { type: Boolean, default: false },
+        acknowledged: { type: Boolean, default: false },
+        orderId: { type: String, default: null },
+        obfuscatedAccountId: { type: String, default: null },
+        testPurchase: { type: Boolean, default: false },
+        lastVerifiedAt: { type: Date, required: true },
+      },
+      { ...opts, timestamps: true, collection: "purchase_records" }
+    )
+  )
+
+  const Entitlement = conn.model(
+    "Entitlement",
+    new Schema(
+      {
+        appId: { type: Schema.Types.ObjectId, required: true },
+        subjectId: { type: String, required: true },
+        key: { type: String, required: true },
+        active: { type: Boolean, required: true },
+        expiresAt: { type: Date, default: null },
+        purchaseId: { type: Schema.Types.ObjectId, default: null },
+      },
+      { ...opts, timestamps: true, collection: "entitlements" }
+    )
+  )
+
+  const SubscriptionEvent = conn.model(
+    "SubscriptionEvent",
+    new Schema(
+      {
+        appId: { type: Schema.Types.ObjectId, required: true },
+        purchaseId: { type: Schema.Types.ObjectId, default: null },
+        subjectId: { type: String, default: null },
+        type: { type: String, required: true },
+        source: { type: String, enum: ["sdk", "rtdn", "reconcile", "admin"], required: true },
+        /** Pub/Sub messageId: a unique index on it makes redelivery a no-op. */
+        providerEventId: { type: String, default: null },
+        at: { type: Date, required: true },
+        detail: { type: Schema.Types.Mixed, default: null },
+      },
+      { ...opts, collection: "subscription_events" }
+    )
+  )
+
+  return { User, Session, Role, AuditLog, Throttle, App, SdkKey, Product, Purchase, Entitlement, SubscriptionEvent }
 }
 
 export type Models = ReturnType<typeof createModels>

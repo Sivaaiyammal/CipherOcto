@@ -24,6 +24,31 @@ const MIGRATIONS: Migration[] = [
       await db.collection("login_throttle").createIndex({ windowEnd: 1 }, { expireAfterSeconds: 0, name: "throttle_ttl" })
     },
   },
+  {
+    id: "0002-apps-and-subscriptions",
+    async up(db) {
+      // A package name is unique within its platform registry (SKILL.md §4A).
+      await db.collection("apps").createIndex({ platform: 1, packageName: 1 }, { unique: true, name: "apps_package_unique" })
+      await db.collection("app_sdk_keys").createIndex({ appId: 1 }, { name: "sdk_keys_app" })
+
+      await db.collection("subscription_products").createIndex({ appId: 1, productId: 1 }, { unique: true, name: "products_app_product" })
+
+      // One record per purchase token per app; also what makes verify-twice idempotent.
+      await db.collection("purchase_records").createIndex({ appId: 1, tokenHash: 1 }, { unique: true, name: "purchases_app_token" })
+      await db.collection("purchase_records").createIndex({ appId: 1, subjectId: 1 }, { name: "purchases_subject" })
+      await db.collection("purchase_records").createIndex({ state: 1, lastVerifiedAt: 1 }, { name: "purchases_reconcile" })
+
+      await db.collection("entitlements").createIndex({ appId: 1, subjectId: 1, key: 1 }, { unique: true, name: "entitlements_subject_key" })
+
+      await db.collection("subscription_events").createIndex({ appId: 1, at: -1 }, { name: "sub_events_app_at" })
+      await db.collection("subscription_events").createIndex({ purchaseId: 1, at: -1 }, { name: "sub_events_purchase" })
+      // Redelivered Pub/Sub messages hit this and are ignored. Partial: SDK events have no provider id.
+      await db.collection("subscription_events").createIndex(
+        { providerEventId: 1 },
+        { unique: true, partialFilterExpression: { providerEventId: { $type: "string" } }, name: "sub_events_provider_unique" }
+      )
+    },
+  },
 ]
 
 export async function runMigrations(conn: Connection): Promise<string[]> {
