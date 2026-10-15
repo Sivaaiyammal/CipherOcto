@@ -29,7 +29,7 @@ export function setUnauthorizedHandler(handler: (() => void) | null) {
 }
 
 type Options = {
-  method?: "GET" | "POST" | "PATCH" | "DELETE"
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
   body?: unknown
   signal?: AbortSignal
   /** Skip the global "session ended" handler (used by the /me bootstrap and login). */

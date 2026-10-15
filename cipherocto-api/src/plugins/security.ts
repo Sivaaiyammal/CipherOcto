@@ -14,7 +14,7 @@ export async function registerSecurity(app: FastifyInstance, config: Config) {
   await app.register(cors, {
     origin: config.webOrigins,
     credentials: true,
-    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   })
   // Swagger UI needs inline scripts; CSP only matters for HTML, and the docs are dev-only.
   await app.register(helmet, { contentSecurityPolicy: config.docsEnabled ? false : undefined })

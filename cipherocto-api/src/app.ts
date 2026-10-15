@@ -7,6 +7,7 @@ import { accessRoutes } from "./modules/access/access.routes.ts"
 import { auditRoutes } from "./modules/audit/audit.routes.ts"
 import { appsRoutes } from "./modules/apps/apps.routes.ts"
 import { authRoutes } from "./modules/auth/auth.routes.ts"
+import { policiesAdminRoutes, policiesPublicRoutes } from "./modules/policies/policies.routes.ts"
 import { sdkRoutes } from "./modules/subscriptions/sdk.routes.ts"
 import { subscriptionsAdminRoutes } from "./modules/subscriptions/subscriptions.admin.routes.ts"
 import { webhookRoutes } from "./modules/subscriptions/webhook.routes.ts"
@@ -101,6 +102,7 @@ export async function buildApp(opts: { env?: Record<string, string | undefined> 
         async (admin) => {
           await admin.register(usersRoutes, { users: services.users })
           await admin.register(appsRoutes, { apps: services.apps })
+          await admin.register(policiesAdminRoutes, { policies: services.policies })
           await admin.register(subscriptionsAdminRoutes, { subscriptions: services.subscriptions })
           await admin.register(accessRoutes, { access: services.access })
           await admin.register(auditRoutes, { audit: services.audit })
@@ -122,6 +124,10 @@ export async function buildApp(opts: { env?: Record<string, string | undefined> 
     },
     { prefix: "/api/v1" }
   )
+
+  // Public policy pages live at the root (`/<app>/privacy`), outside /api, so the
+  // URL pasted into the Play Console stays short and stable.
+  await app.register(policiesPublicRoutes, { policies: services.policies })
 
   return app
 }

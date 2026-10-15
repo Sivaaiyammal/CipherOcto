@@ -9,6 +9,8 @@ import { RolesRepository } from "./modules/access/roles.repository.ts"
 import { AuditRepository } from "./modules/audit/audit.repository.ts"
 import { AuditService } from "./modules/audit/audit.service.ts"
 import { AuthService } from "./modules/auth/auth.service.ts"
+import { PoliciesRepository } from "./modules/policies/policies.repository.ts"
+import { PoliciesService } from "./modules/policies/policies.service.ts"
 import { SessionsRepository } from "./modules/auth/sessions.repository.ts"
 import { ThrottleRepository } from "./modules/auth/throttle.repository.ts"
 import { GooglePlayVerifier, GooglePushAuthenticator } from "./modules/subscriptions/play.google.ts"
@@ -52,6 +54,7 @@ export function createServices(config: Config, models: Models, log: FastifyBaseL
 
   const appsRepo = new AppsRepository(models)
   const apps = new AppsService({ repo: appsRepo, audit })
+  const policies = new PoliciesService({ repo: new PoliciesRepository(models), apps, audit })
 
   // With no credentials we fail closed: purchases are never granted unverified.
   const verifier =
@@ -72,7 +75,7 @@ export function createServices(config: Config, models: Models, log: FastifyBaseL
     log,
   })
 
-  return { access, audit, users, auth, apps, subscriptions, pushAuth, repos: { users: usersRepo, sessions: sessionsRepo, apps: appsRepo } }
+  return { access, audit, users, auth, apps, policies, subscriptions, pushAuth, repos: { users: usersRepo, sessions: sessionsRepo, apps: appsRepo } }
 }
 
 export type Services = ReturnType<typeof createServices>

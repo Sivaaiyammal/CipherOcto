@@ -17,6 +17,7 @@ import FinancePage from '@/pages/finance'
 import IntegrationsPage from '@/pages/integrations'
 import LoginPage from '@/pages/login'
 import PlaceholderPage from '@/pages/placeholder'
+import PoliciesPage from '@/pages/policies'
 import ReleasesPage from '@/pages/releases'
 import RemoteConfigPage from '@/pages/remote-config'
 import TeamPage from '@/pages/team'
@@ -44,6 +45,7 @@ function App() {
                   </Route>
                   <Route element={<RequirePermission permission="apps:read" />}>
                     <Route path="billing" element={<BillingSetupPage />} />
+                    <Route path="policies" element={<PoliciesPage />} />
                   </Route>
                   <Route element={<RequirePermission permission="config:read" />}>
                     <Route path="remote-config" element={<RemoteConfigPage />} />

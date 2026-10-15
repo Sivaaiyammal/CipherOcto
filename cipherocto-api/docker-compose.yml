@@ -34,6 +34,9 @@ services:
       # Behind Nginx terminating TLS:
       TRUST_PROXY: "true"
       COOKIE_SECURE: "true"
+      # Encrypts stored purchase tokens at rest (required; keep it stable).
+      PURCHASE_TOKEN_KEY: ${PURCHASE_TOKEN_KEY:?set PURCHASE_TOKEN_KEY (see .env.example)}
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${GOOGLE_PLAY_SERVICE_ACCOUNT_JSON:-}
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
 

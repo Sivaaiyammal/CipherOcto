@@ -145,6 +145,8 @@ export function createModels(conn: Connection) {
       {
         name: { type: String, required: true, trim: true },
         packageName: { type: String, required: true, trim: true },
+        /** Public URL segment (`/<slug>/privacy`). Unique; reserved words are refused. */
+        slug: { type: String, trim: true, lowercase: true },
         platform: { type: String, enum: ["android"], default: "android" },
         status: {
           type: String,
@@ -255,7 +257,25 @@ export function createModels(conn: Connection) {
     )
   )
 
-  return { User, Session, Role, AuditLog, Throttle, App, SdkKey, Product, Purchase, Entitlement, SubscriptionEvent }
+  // ── Public policy pages ────────────────────────────────────────────────
+  // One document per published version; the highest `version` is what's served.
+  // `html` is the sanitized fragment, so what's stored is exactly what's rendered.
+  const AppPolicy = conn.model(
+    "AppPolicy",
+    new Schema(
+      {
+        appId: { type: Schema.Types.ObjectId, required: true },
+        kind: { type: String, enum: ["privacy"], required: true },
+        version: { type: Number, required: true },
+        html: { type: String, required: true },
+        publishedBy: { type: String, default: null },
+        publishedByEmail: { type: String, default: null },
+      },
+      { ...opts, timestamps: { createdAt: true, updatedAt: false }, collection: "app_policies" }
+    )
+  )
+
+  return { User, Session, Role, AuditLog, Throttle, App, SdkKey, Product, Purchase, Entitlement, SubscriptionEvent, AppPolicy }
 }
 
 export type Models = ReturnType<typeof createModels>

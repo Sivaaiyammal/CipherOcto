@@ -1,7 +1,8 @@
 import { randomBytes } from "node:crypto"
 
 import { hashToken } from "../../shared/crypto.ts"
-import { notFound } from "../../shared/errors.ts"
+import { badRequest, notFound } from "../../shared/errors.ts"
+import { isReservedSlug, slugBase, SLUG_RE, uniqueSlug } from "../../shared/slug.ts"
 import type { AuthContext } from "../../shared/auth-context.ts"
 import type { AuditService } from "../audit/audit.service.ts"
 import type { AppRecord, AppsRepository, AppStatus, SdkKeyRecord } from "./apps.repository.ts"
@@ -31,12 +32,15 @@ export class AppsService {
 
   async create(
     actor: AuthContext,
-    input: { name: string; packageName: string; status?: AppStatus; owner?: string; techStack?: string; playConsoleUrl?: string },
+    input: { name: string; packageName: string; slug?: string; status?: AppStatus; owner?: string; techStack?: string; playConsoleUrl?: string },
     ip: string
   ) {
+    const taken = await this.repo.allSlugs()
+    const slug = input.slug ? this.checkedSlug(input.slug) : uniqueSlug(slugBase(input.name, input.packageName), taken)
     const app = await this.repo.create({
       name: input.name,
       packageName: input.packageName,
+      slug,
       status: input.status ?? "development",
       owner: input.owner ?? "",
       techStack: input.techStack ?? "",
@@ -49,10 +53,11 @@ export class AppsService {
   async update(
     actor: AuthContext,
     id: string,
-    patch: { name?: string; status?: AppStatus; owner?: string; techStack?: string; playConsoleUrl?: string },
+    patch: { name?: string; slug?: string; status?: AppStatus; owner?: string; techStack?: string; playConsoleUrl?: string },
     ip: string
   ) {
     const app = await this.get(id)
+    if (patch.slug !== undefined) patch = { ...patch, slug: this.checkedSlug(patch.slug) }
     await this.repo.update(app.id, patch)
     await this.audit.record({
       actorId: actor.user.id,
@@ -60,9 +65,23 @@ export class AppsService {
       action: "app.updated",
       target: app.packageName,
       ip,
-      detail: { from: { status: app.status, name: app.name }, to: patch },
+      detail: { from: { status: app.status, name: app.name, slug: app.slug }, to: patch },
     })
     return this.get(id)
+  }
+
+  /** Public lookup for the policy pages: the app behind `/<slug>/…`, or null. */
+  bySlug(slug: string) {
+    return this.repo.bySlug(slug)
+  }
+
+  private checkedSlug(raw: string) {
+    const slug = raw.trim().toLowerCase()
+    if (!SLUG_RE.test(slug) || slug.length < 2) {
+      throw badRequest("invalid_slug", "Use 2–40 lowercase letters, numbers and hyphens (no leading or trailing hyphen).")
+    }
+    if (isReservedSlug(slug)) throw badRequest("reserved_slug", "That URL name is reserved. Choose another.")
+    return slug
   }
 
   // ── SDK keys ───────────────────────────────────────────────────────────

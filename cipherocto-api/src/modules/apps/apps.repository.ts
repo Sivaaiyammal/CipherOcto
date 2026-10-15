@@ -9,6 +9,8 @@ export type AppRecord = {
   id: string
   name: string
   packageName: string
+  /** Public URL segment: `/<slug>/privacy`. */
+  slug: string
   platform: "android"
   status: AppStatus
   owner: string
@@ -33,6 +35,7 @@ type AppLean = {
   _id: unknown
   name: string
   packageName: string
+  slug?: string
   platform: "android"
   status: AppStatus
   owner?: string
@@ -56,6 +59,7 @@ const toApp = (a: AppLean): AppRecord => ({
   id: String(a._id),
   name: a.name,
   packageName: a.packageName,
+  slug: a.slug ?? "",
   platform: a.platform,
   status: a.status,
   owner: a.owner ?? "",
@@ -99,21 +103,50 @@ export class AppsRepository {
     return a ? toApp(a) : null
   }
 
-  async create(input: { name: string; packageName: string; status: AppStatus; owner: string; techStack: string; playConsoleUrl: string }) {
+  async bySlug(slug: string): Promise<AppRecord | null> {
+    const a = await this.apps.findOne({ slug }).lean<AppLean | null>()
+    return a ? toApp(a) : null
+  }
+
+  async allSlugs(): Promise<Set<string>> {
+    const rows = await this.apps.find({ slug: { $type: "string" } }, { slug: 1 }).lean<{ slug: string }[]>()
+    return new Set(rows.map((r) => r.slug))
+  }
+
+  async create(input: {
+    name: string
+    packageName: string
+    slug: string
+    status: AppStatus
+    owner: string
+    techStack: string
+    playConsoleUrl: string
+  }) {
     try {
       const doc = await this.apps.create({ ...input, platform: "android" })
       return toApp(doc.toObject() as AppLean)
     } catch (err) {
-      if ((err as { code?: number }).code === 11000) {
-        throw conflict("package_taken", "An app with that package name is already registered.")
-      }
-      throw err
+      throw this.duplicate(err)
     }
   }
 
-  async update(id: string, patch: Partial<Pick<AppRecord, "name" | "status" | "owner" | "techStack" | "playConsoleUrl">>) {
+  async update(id: string, patch: Partial<Pick<AppRecord, "name" | "slug" | "status" | "owner" | "techStack" | "playConsoleUrl">>) {
     const set = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined))
-    if (Object.keys(set).length) await this.apps.updateOne({ _id: id }, { $set: set })
+    if (!Object.keys(set).length) return
+    try {
+      await this.apps.updateOne({ _id: id }, { $set: set })
+    } catch (err) {
+      throw this.duplicate(err)
+    }
+  }
+
+  /** Maps a unique-index violation to the right 409; anything else passes through. */
+  private duplicate(err: unknown) {
+    if ((err as { code?: number }).code !== 11000) return err
+    const index = String((err as { message?: string }).message ?? "")
+    return index.includes("apps_slug_unique") || index.includes("slug")
+      ? conflict("slug_taken", "That URL name is already used by another app.")
+      : conflict("package_taken", "An app with that package name is already registered.")
   }
 
   // ── SDK keys ───────────────────────────────────────────────────────────

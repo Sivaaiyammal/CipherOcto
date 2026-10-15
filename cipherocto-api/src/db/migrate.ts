@@ -1,4 +1,7 @@
 import type { Connection } from "mongoose"
+import type { ObjectId } from "mongodb"
+
+import { slugBase, uniqueSlug } from "../shared/slug.ts"
 
 type Db = NonNullable<Connection["db"]>
 
@@ -47,6 +50,30 @@ const MIGRATIONS: Migration[] = [
         { providerEventId: 1 },
         { unique: true, partialFilterExpression: { providerEventId: { $type: "string" } }, name: "sub_events_provider_unique" }
       )
+    },
+  },
+  {
+    id: "0003-app-slugs-and-policies",
+    async up(db) {
+      // Give every pre-existing app a public slug before the unique index is built.
+      const apps = db.collection<{ _id: ObjectId; name?: string; packageName?: string; slug?: string }>("apps")
+      const taken = new Set<string>()
+      const missing: { _id: ObjectId; name?: string; packageName?: string }[] = []
+      for await (const a of apps.find({}, { projection: { name: 1, packageName: 1, slug: 1 } })) {
+        if (a.slug) taken.add(a.slug)
+        else missing.push(a)
+      }
+      for (const a of missing) {
+        const slug = uniqueSlug(slugBase(a.name, a.packageName), taken)
+        taken.add(slug)
+        await apps.updateOne({ _id: a._id }, { $set: { slug } })
+      }
+      await apps.createIndex({ slug: 1 }, { unique: true, name: "apps_slug_unique" })
+
+      // One row per (app, kind, version); the highest version is the live page.
+      await db
+        .collection("app_policies")
+        .createIndex({ appId: 1, kind: 1, version: -1 }, { unique: true, name: "policies_app_kind_version" })
     },
   },
 ]

@@ -18,6 +18,7 @@ const AppView = z.object({
   id: z.string(),
   name: z.string(),
   packageName: z.string(),
+  slug: z.string(),
   platform: z.literal("android"),
   status: Status,
   owner: z.string(),
@@ -39,6 +40,8 @@ const KeyView = z.object({
 const CreateAppBody = z.object({
   name: z.string().trim().min(1, "Enter a name.").max(120),
   packageName: PackageName,
+  /** Public URL name; derived from the app name when omitted. */
+  slug: z.string().trim().max(40).optional(),
   status: Status.optional(),
   owner: z.string().trim().max(120).optional(),
   techStack: z.string().trim().max(200).optional(),
@@ -48,6 +51,7 @@ const CreateAppBody = z.object({
 const UpdateAppBody = z
   .object({
     name: z.string().trim().min(1).max(120).optional(),
+    slug: z.string().trim().min(2).max(40).optional(),
     status: Status.optional(),
     owner: z.string().trim().max(120).optional(),
     techStack: z.string().trim().max(200).optional(),
