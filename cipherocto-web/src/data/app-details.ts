@@ -1,33 +1,47 @@
-// Per-app detail figures. Derived deterministically from the portfolio record
-// (seeded by app id) so every app has stable, self-consistent mock data until
-// the analytics and store APIs are connected.
+// Per-app detail figures for the app detail page.
+//
+// Nothing here is synthesized. Values come from the registry (platforms, category)
+// and from the subscription backend (verification / RTDN status, active entitlements,
+// product mappings). Metrics that need Google Play reporting or analytics (revenue,
+// DAU, crash rate, ratings, paywall conversion…) are `null` and series are empty, so
+// the cards render "—" / an inline hint until those integrations exist.
+import * as React from "react"
+
 import type { PortfolioApp } from "@/data/apps"
-import { between, seededRandom } from "@/lib/seeded-random"
+import { useAuth } from "@/data/auth-context"
+import { ApiError } from "@/lib/api"
+import { billingApi, type ProductMapping, type SubscriptionSummary } from "@/lib/billing-api"
 
 export type AppDetail = {
+  /** The public URL name, shown where the design had a generated "App ID". */
   appCode: string
   categoryLong: string
-  mrr: number
-  iap: number
-  arppu: number
-  dau: number
-  stickiness: number
-  sessions: number
-  crashes: number
-  anrRate: number
+  mrr: number | null
+  iap: number | null
+  arppu: number | null
+  dau: number | null
+  stickiness: number | null
+  sessions: number | null
+  crashes: number | null
+  anrRate: number | null
   iosRating: number | null
   androidRating: number | null
-  ratingDelta: number
-  paywallConversion: number
-  paywallUplift: number
-  paywallVariant: string
-  weeklyTrials: number
-  trialToPaid: number
-  iosShare: number
-  webhookLatency: number
-  lastHandshake: string
-  refundRate: number
-  releaseDaysAgo: number
+  ratingDelta: number | null
+  paywallConversion: number | null
+  paywallUplift: number | null
+  paywallVariant: string | null
+  weeklyTrials: number | null
+  trialToPaid: number | null
+  /** Share of the store audience on Apple platforms; known only from the platform list. */
+  iosShare: number | null
+  /** Platforms the app ships on, for labels when shares are unknown. */
+  platformNames: string[]
+  /** Play billing / RTDN status from the subscription backend; null until loaded. */
+  notificationsConfigured: boolean | null
+  verificationConfigured: boolean | null
+  lastVerifiedAt: string | null
+  refundRate: number | null
+  releaseDaysAgo: number | null
   capabilities: { label: string; tone: "blue" | "mint" | "amber" | "lavender" }[]
   trends: {
     revenue: number[]
@@ -37,88 +51,54 @@ export type AppDetail = {
   }
 }
 
-const CATEGORY_LONG: Record<string, string> = {
-  Productivity: "Productivity & Routine Optimization",
-  Utilities: "Utilities & Focus Tools",
-  Education: "Education & Reading",
-  "Health & Fitness": "Health, Fitness & Wellbeing",
-}
-
-function walk(rand: () => number, points: number, start: number, drift: number, noise: number) {
-  const out: number[] = []
-  let v = start
-  for (let i = 0; i < points; i++) {
-    v += drift + (rand() - 0.5) * noise
-    out.push(v)
-  }
-  return out
-}
-
-const round = (v: number, digits = 2) => Number(v.toFixed(digits))
-
-export function getAppDetail(app: PortfolioApp): AppDetail {
-  const rand = seededRandom(app.id)
-  const has = (p: PortfolioApp["platforms"][number]) => app.platforms.includes(p)
+function platformInfo(app: PortfolioApp) {
   const onApple = app.platforms.some((p) => p === "ios" || p === "watchos" || p === "macos")
-  const onAndroid = has("android")
+  const onAndroid = app.platforms.includes("android")
+  // Only a single-store app has a knowable split (100/0).
+  const iosShare = onApple && onAndroid ? null : onApple ? 100 : 0
+  const platformNames = [onApple ? "iOS" : null, onAndroid ? "Android" : null].filter((n): n is string => n !== null)
+  return { onApple, onAndroid, iosShare, platformNames }
+}
 
-  const mrrShare = between(rand, 0.72, 0.84)
-  const stickiness = between(rand, 0.18, 0.32)
-  const sessions = app.mau * between(rand, 1.15, 1.4)
-  const crashes = Math.round(sessions * ((100 - app.crashFree) / 100))
-  const hasUsers = app.mau > 0
-  const hasReviews = app.ratingCount > 0
-  const paywallConversion = hasUsers ? between(rand, 3.2, 6.4) : 0
+export function buildAppDetail(app: PortfolioApp, summary: SubscriptionSummary | null): AppDetail {
+  const { onApple, onAndroid, iosShare, platformNames } = platformInfo(app)
 
   const capabilities: AppDetail["capabilities"] = []
-  if (onApple) capabilities.push({ label: "StoreKit 2 Enabled", tone: "blue" })
-  if (onAndroid) capabilities.push({ label: "Google Play Billing 6.1", tone: "mint" })
-  if (has("watchos")) capabilities.push({ label: "WatchOS Complication Sync", tone: "amber" })
-  if (has("macos")) capabilities.push({ label: "Mac Catalyst", tone: "amber" })
-  if (has("web")) capabilities.push({ label: "Web Checkout", tone: "lavender" })
-  if (app.mau > 500_000) {
-    capabilities.push({
-      label: `Instant App / App Clip ${Math.round((app.mau * 0.03) / 1000)}k`,
-      tone: "lavender",
-    })
-  }
+  if (onApple) capabilities.push({ label: "App Store", tone: "blue" })
+  if (onAndroid) capabilities.push({ label: "Google Play Billing", tone: "mint" })
+  if (app.platforms.includes("watchos")) capabilities.push({ label: "WatchOS", tone: "amber" })
+  if (app.platforms.includes("web")) capabilities.push({ label: "Web Checkout", tone: "lavender" })
+  if (summary?.verificationConfigured) capabilities.push({ label: "Purchase verification on", tone: "mint" })
+  if (summary?.notificationsConfigured) capabilities.push({ label: "Play RTDN on", tone: "lavender" })
 
   return {
-    appCode: `#${app.name
-      .split(/\s+/)
-      .map((w) => w[0])
-      .join("")
-      .toUpperCase()
-      .padEnd(2, "X")}-${Math.floor(between(rand, 10_000, 99_999))}`,
-    categoryLong: CATEGORY_LONG[app.category] ?? app.category,
-    mrr: app.revenueMonthly * mrrShare,
-    iap: app.revenueMonthly * (1 - mrrShare),
-    arppu: app.subscribers ? app.revenueMonthly / app.subscribers : 0,
-    dau: app.mau * stickiness,
-    stickiness,
-    sessions,
-    crashes,
-    anrRate: round((100 - app.crashFree) / between(rand, 2.5, 4), 2),
-    iosRating: onApple && hasReviews ? round(Math.min(5, app.rating + between(rand, 0, 0.06))) : null,
-    androidRating: onAndroid && hasReviews ? round(Math.min(5, app.rating - between(rand, 0, 0.06))) : null,
-    ratingDelta: round(between(rand, 0.02, 0.12)),
-    paywallConversion: round(paywallConversion, 1),
-    paywallUplift: hasUsers ? round(between(rand, 0.2, 0.9), 1) : 0,
-    paywallVariant: `V${Math.floor(between(rand, 2, 6))}`,
-    weeklyTrials: Math.round(app.subscribers * between(rand, 0.1, 0.14)),
-    trialToPaid: Math.round(between(rand, 62, 78)),
-    iosShare: onApple && onAndroid ? Math.round(between(rand, 55, 72)) : onApple ? 100 : 0,
-    webhookLatency: round(between(rand, 0.8, 1.6), 1),
-    lastHandshake: `${Math.floor(between(rand, 2, 30))}s ago`,
-    refundRate: round(between(rand, 0.3, 0.7), 2),
-    releaseDaysAgo: Math.floor(between(rand, 5, 12)),
+    appCode: app.slug,
+    categoryLong: app.category || "Uncategorized",
+    mrr: null,
+    iap: null,
+    arppu: null,
+    dau: null,
+    stickiness: null,
+    sessions: null,
+    crashes: null,
+    anrRate: null,
+    iosRating: null,
+    androidRating: null,
+    ratingDelta: null,
+    paywallConversion: null,
+    paywallUplift: null,
+    paywallVariant: null,
+    weeklyTrials: null,
+    trialToPaid: null,
+    iosShare,
+    platformNames,
+    notificationsConfigured: summary ? summary.notificationsConfigured : null,
+    verificationConfigured: summary ? summary.verificationConfigured : null,
+    lastVerifiedAt: summary?.lastVerifiedAt ?? null,
+    refundRate: null,
+    releaseDaysAgo: null,
     capabilities,
-    trends: {
-      revenue: hasUsers ? walk(rand, 14, 40, 1.4, 4) : Array(14).fill(0),
-      audience: hasUsers ? walk(rand, 14, 30, 1.1, 3) : Array(14).fill(0),
-      stability: walk(rand, 14, app.crashFree - 0.08, 0.006, 0.03),
-      paywall: hasUsers ? walk(rand, 14, paywallConversion - 0.6, 0.05, 0.3) : Array(14).fill(0),
-    },
+    trends: { revenue: [], audience: [], stability: [], paywall: [] },
   }
 }
 
@@ -134,43 +114,12 @@ export type PulsePoint = {
   isRelease: boolean
 }
 
-/** Last 30 days of daily values for the Monetization & Acquisition Pulse. */
-export function getPulseSeries(
-  app: PortfolioApp,
-  metric: PulseMetric,
-  releaseDaysAgo: number,
-  today = new Date()
-): PulsePoint[] {
-  const rand = seededRandom(`${app.id}:${metric}`)
-  const daily = {
-    revenue: app.revenueMonthly / 30,
-    installs: app.installs30d / 30,
-    subscribers: (app.subscribers * 0.045) / 30,
-  }[metric]
-
-  const raw = Array.from({ length: 30 }, (_, i) => {
-    const date = new Date(today)
-    date.setDate(today.getDate() - (29 - i))
-    const daysAgo = 29 - i
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6
-    const afterRelease = daysAgo <= releaseDaysAgo
-    const value =
-      daily *
-      0.82 *
-      (isWeekend ? between(rand, 1.2, 1.38) : between(rand, 0.9, 1.06)) *
-      (afterRelease ? 1.16 : 1) *
-      (1 + i * 0.006)
-    return { date, isWeekend, isRelease: daysAgo === releaseDaysAgo, value }
-  })
-
-  return raw.map((p, i) => {
-    const window = raw.slice(Math.max(0, i - 6), i + 1)
-    return {
-      ...p,
-      label: p.date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      trend: window.reduce((s, w) => s + w.value, 0) / window.length,
-    }
-  })
+/**
+ * Daily series for the Monetization & Acquisition Pulse. Needs Google Play
+ * reporting (not imported yet), so there are no points to draw.
+ */
+export function getPulseSeries(): PulsePoint[] {
+  return []
 }
 
 export type ScopedFlag = {
@@ -179,18 +128,65 @@ export type ScopedFlag = {
   enabled: boolean
 }
 
-/** Flags scoped to one app; the first few are shown on the detail page. */
-export function getScopedFlags(app: PortfolioApp): ScopedFlag[] {
-  const ios = app.platforms.includes("ios")
-  const flags: ScopedFlag[] = [
-    {
-      key: "enable_ai_summary",
-      description: ios ? "iOS ≥ 17.2 • 90% allocation" : "Android ≥ 12 • 90% allocation",
-      enabled: true,
-    },
-    { key: "onboarding_v4_paywall", description: "A/B Test active (50/50 split)", enabled: true },
-    { key: "haptic_feedback_engine", description: "Global 100% rollout", enabled: true },
-    { key: "black_friday_precache", description: "Armed for Nov 24, 00:00 UTC", enabled: false },
-  ]
-  return flags.slice(0, Math.min(flags.length, app.configFlags))
+/** Needs the remote-config module (not built yet). */
+export function getScopedFlags(): ScopedFlag[] {
+  return []
+}
+
+// ── Live data hook ─────────────────────────────────────────────────────────
+
+export type AppDetailData = {
+  detail: AppDetail
+  summary: SubscriptionSummary | null
+  products: ProductMapping[]
+  /** Whether the role may see subscription data at all. */
+  canSeeBilling: boolean
+  loading: boolean
+  error: string | null
+  reload: () => void
+}
+
+/** Loads the subscription summary and product mappings for one app. */
+export function useAppDetail(app: PortfolioApp): AppDetailData {
+  const { can } = useAuth()
+  const canSeeBilling = can("subscriptions:read")
+  const appId = app.id
+
+  const [tick, setTick] = React.useState(0)
+  // Results are keyed by the request that produced them, so switching apps (or
+  // reloading) reads as "loading" without resetting state inside the effect.
+  const key = `${appId}:${tick}`
+  const [result, setResult] = React.useState<{
+    key: string
+    summary: SubscriptionSummary | null
+    products: ProductMapping[]
+    error: string | null
+  } | null>(null)
+
+  React.useEffect(() => {
+    if (!canSeeBilling) return
+    const ctrl = new AbortController()
+    Promise.all([billingApi.summary(appId, ctrl.signal), billingApi.listProducts(appId, ctrl.signal)])
+      .then(([summary, products]) => setResult({ key, summary, products, error: null }))
+      .catch((e) => {
+        if (ctrl.signal.aborted) return
+        setResult({
+          key,
+          summary: null,
+          products: [],
+          error: e instanceof ApiError ? e.message : "Couldn't load subscription data.",
+        })
+      })
+    return () => ctrl.abort()
+  }, [appId, canSeeBilling, key])
+
+  const current = result?.key === key ? result : null
+  const summary = current?.summary ?? null
+  const products = React.useMemo(() => current?.products ?? [], [current])
+  const error = current?.error ?? null
+  const loading = canSeeBilling && current === null
+
+  const detail = React.useMemo(() => buildAppDetail(app, summary), [app, summary])
+
+  return { detail, summary, products, canSeeBilling, loading, error, reload: () => setTick((t) => t + 1) }
 }

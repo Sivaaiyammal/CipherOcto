@@ -8,7 +8,6 @@ import {
   ChevronRightIcon,
   Loader2Icon,
   RocketIcon,
-  ShieldCheckIcon,
 } from "lucide-react"
 
 import {
@@ -24,10 +23,12 @@ import { StepCredentials } from "@/components/register/step-credentials"
 import { StepIdentity } from "@/components/register/step-identity"
 import { StepVerification } from "@/components/register/step-verification"
 import { StepWebhooks } from "@/components/register/step-webhooks"
-import { APP_QUOTA } from "@/data/apps"
+import { toPortfolioApp } from "@/data/apps"
 import { useApps } from "@/data/apps-context"
+import { ApiError } from "@/lib/api"
+import { billingApi } from "@/lib/billing-api"
 import {
-  buildPortfolioApp,
+  buildCreateAppBody,
   clearDraft,
   EMPTY_DRAFT,
   loadDraft,
@@ -70,7 +71,7 @@ function downloadReport(draft: RegisterDraft) {
     `Outbound webhook: ${draft.webhook.url || "none"}`,
     `HMAC signing: ${draft.env.hmac ? "enforced" : "off"}   Circuit breaker: ${draft.env.circuitBreaker ? "on" : "off"}`,
     "",
-    "Note: verification probes are simulated until the CipherOcto backend is connected.",
+    "Note: only registration checks (identifier format and uniqueness) were run. Store credential, RTDN and webhook delivery checks run once Google Play is connected.",
   ]
   const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" }))
   const a = document.createElement("a")
@@ -82,17 +83,19 @@ function downloadReport(draft: RegisterDraft) {
 
 export default function RegisterAppPage() {
   const navigate = useNavigate()
-  const { apps, addApp } = useApps()
+  const { apps, upsert } = useApps()
   const [draft, setDraft] = React.useState<RegisterDraft>(() => loadDraft() ?? EMPTY_DRAFT)
   const [step, setStep] = React.useState(0)
   const [attempted, setAttempted] = React.useState(false)
   const [savedNote, setSavedNote] = React.useState<string | null>(null)
   const [signingSecret, setSigningSecret] = React.useState(newSigningSecret)
   const [activating, setActivating] = React.useState(false)
-  const verification = useVerification(draft)
+  const [submitError, setSubmitError] = React.useState<string | null>(null)
+  const verification = useVerification(
+    draft,
+    apps.map((a) => a.bundleId)
+  )
   const startedVerification = React.useRef(false)
-
-  const slotsLeft = APP_QUOTA - apps.length
 
   // Errors show once the user has tried to continue, and clear live as they fix them
   const errors: Errors = attempted ? validateStep(step, draft) : {}
@@ -132,31 +135,22 @@ export default function RegisterAppPage() {
     goTo(step + 1)
   }
 
-  const onActivate = () => {
+  const onActivate = async () => {
     setActivating(true)
-    window.setTimeout(() => {
-      const app = buildPortfolioApp(draft, apps.map((a) => a.id))
-      addApp(app)
+    setSubmitError(null)
+    try {
+      const created = await billingApi.createApp(buildCreateAppBody(draft))
+      upsert(toPortfolioApp(created))
       clearDraft()
-      navigate(`/apps/${app.id}`, { replace: true })
-    }, 1200)
-  }
-
-  if (slotsLeft <= 0) {
-    return (
-      <div className="px-4 lg:px-6">
-        <div className="mx-auto flex max-w-lg flex-col items-center gap-3 rounded-2xl bg-card p-8 text-center shadow-[var(--shadow-1)]">
-          <ShieldCheckIcon className="size-8 text-muted-foreground" />
-          <h1 className="text-[22px] font-semibold text-foreground">App quota reached</h1>
-          <p className="text-sm text-muted-foreground">
-            All {APP_QUOTA} production slots in Octo Corp Org are in use. Archive an app or upgrade your plan to register another.
-          </p>
-          <Link to="/apps" className="text-[13px] font-semibold text-mint hover:underline">
-            Back to Apps
-          </Link>
-        </div>
-      </div>
-    )
+      navigate(`/apps/${created.id}`, { replace: true })
+    } catch (err) {
+      setSubmitError(
+        err instanceof ApiError
+          ? err.message
+          : "Couldn't register the app. Check your connection and try again."
+      )
+      setActivating(false)
+    }
   }
 
   const isFinal = step === 3
@@ -247,6 +241,11 @@ export default function RegisterAppPage() {
             />
           )}
           {step === 3 && <StepVerification draft={draft} v={verification} />}
+          {submitError && (
+            <div role="alert" className="rounded-xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+              {submitError}
+            </div>
+          )}
         </div>
 
         <aside className="flex min-w-0 flex-col gap-6 @5xl/main:sticky @5xl/main:top-20 @5xl/main:col-span-4">
@@ -257,7 +256,7 @@ export default function RegisterAppPage() {
                 usedSlots={apps.length}
                 ready={verification.allPassed}
                 activating={activating}
-                onActivate={onActivate}
+                onActivate={() => void onActivate()}
                 onDownloadReport={() => downloadReport(draft)}
               />
               <PreFlightChecklist draft={draft} ready={verification.allPassed} />
@@ -265,7 +264,7 @@ export default function RegisterAppPage() {
             </>
           ) : (
             <>
-              <SetupChecklist draft={draft} slotsLeft={slotsLeft} />
+              <SetupChecklist draft={draft} registered={apps.length} />
               <CatalogPreview draft={draft} ready={Object.keys(validateStep(0, draft)).length === 0} />
               <StepTip step={step} />
             </>
@@ -299,7 +298,7 @@ export default function RegisterAppPage() {
               <button
                 type="button"
                 disabled={!verification.allPassed || activating}
-                onClick={onActivate}
+                onClick={() => void onActivate()}
                 className="flex h-10 items-center gap-2 rounded-xl bg-primary px-5 text-[13px] font-bold text-primary-foreground shadow-[var(--shadow-2)] hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {activating ? <Loader2Icon className="size-4 animate-spin" /> : <RocketIcon className="size-4 text-mint-border" />}

@@ -11,7 +11,8 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-import type { AppTone, Platform, PortfolioApp } from "@/data/apps"
+import type { AppTone, Platform } from "@/data/apps"
+import type { BackendAppStatus as AppStatus } from "@/lib/billing-api"
 
 export const CATEGORIES: { value: string; icon: LucideIcon; tone: AppTone }[] = [
   { value: "Productivity", icon: ListChecksIcon, tone: "mint" },
@@ -82,7 +83,8 @@ export const EMPTY_DRAFT: RegisterDraft = {
   currency: "USD",
   ageRating: "4+ Standard",
   iconDataUrl: null,
-  ios: { enabled: true, bundleId: "", appleId: "", keyId: "", issuerId: "", p8FileName: null },
+  // App Store registration isn't supported by the backend yet (Google Play first).
+  ios: { enabled: false, bundleId: "", appleId: "", keyId: "", issuerId: "", p8FileName: null },
   android: { enabled: true, packageName: "", serviceAccountFile: null, serviceAccountEmail: null, topic: "" },
   webhook: { url: "", events: ["subscription.renewed", "subscription.cancelled", "purchase.refunded"] },
   env: { production: true, hmac: true, circuitBreaker: true },
@@ -105,26 +107,26 @@ export function validateStep(step: number, d: RegisterDraft): Errors {
     if (!d.name.trim()) e.name = "Enter the app's display name."
     else if (d.name.length > NAME_MAX) e.name = `Keep it under ${NAME_MAX} characters.`
     if (!d.ios.enabled && !d.android.enabled) e.platforms = "Enable at least one storefront."
+    else if (!d.android.enabled) e.platforms = "App Store registration isn't available yet. Enable Google Play to continue."
     if (d.ios.enabled) {
-      if (!BUNDLE_RE.test(d.ios.bundleId)) e.bundleId = "Use reverse-DNS format, e.g. com.company.app."
-      if (!APPLE_ID_RE.test(d.ios.appleId)) e.appleId = "The numeric Apple ID is 9–10 digits."
+      // Optional until App Store support lands; only the format is checked when filled in.
+      if (d.ios.bundleId && !BUNDLE_RE.test(d.ios.bundleId)) e.bundleId = "Use reverse-DNS format, e.g. com.company.app."
+      if (d.ios.appleId && !APPLE_ID_RE.test(d.ios.appleId)) e.appleId = "The numeric Apple ID is 9–10 digits."
     }
     if (d.android.enabled && !PACKAGE_RE.test(d.android.packageName)) {
       e.packageName = "Use a valid package name, e.g. com.company.app.android."
     }
   }
   if (step === 1) {
+    // Store credentials are optional at registration; they are verified once the store
+    // is connected. Only the format is checked when a value is provided.
     if (d.ios.enabled) {
-      if (!KEY_ID_RE.test(d.ios.keyId)) e.keyId = "Key IDs are 10 uppercase letters or digits."
-      if (!UUID_RE.test(d.ios.issuerId)) e.issuerId = "The Issuer ID is a UUID from App Store Connect › Users and Access › Keys."
-      if (!d.ios.p8FileName) e.p8 = "Upload the .p8 private key file."
-    }
-    if (d.android.enabled && !d.android.serviceAccountEmail) {
-      e.serviceAccount = "Upload a Google service account JSON key."
+      if (d.ios.keyId && !KEY_ID_RE.test(d.ios.keyId)) e.keyId = "Key IDs are 10 uppercase letters or digits."
+      if (d.ios.issuerId && !UUID_RE.test(d.ios.issuerId)) e.issuerId = "The Issuer ID is a UUID from App Store Connect › Users and Access › Keys."
     }
   }
   if (step === 2) {
-    if (d.android.enabled && !TOPIC_RE.test(d.android.topic)) {
+    if (d.android.enabled && d.android.topic && !TOPIC_RE.test(d.android.topic)) {
       e.topic = "Format: projects/<project-id>/topics/<topic-name>."
     }
     if (d.webhook.url) {
@@ -177,39 +179,18 @@ export function platformSummary(d: RegisterDraft) {
   return "No storefront"
 }
 
-/** Builds the portfolio record created on activation (no telemetry yet). */
-export function buildPortfolioApp(d: RegisterDraft, existingIds: string[]): PortfolioApp {
-  const category = CATEGORIES.find((c) => c.value === d.category) ?? CATEGORIES[0]
-  let id = slugify(d.name) || "new-app"
-  for (let n = 2; existingIds.includes(id); n++) id = `${slugify(d.name) || "new-app"}-${n}`
-
+/** The request body for POST /admin/apps. Credentials are never part of it. */
+export function buildCreateAppBody(d: RegisterDraft): {
+  name: string
+  packageName: string
+  category: string
+  status: AppStatus
+} {
   return {
-    id,
     name: d.name.trim(),
-    bundleId: d.ios.enabled ? d.ios.bundleId : d.android.packageName,
-    version: "1.0.0",
-    build: 1,
-    category: category.value,
-    platforms: draftPlatforms(d),
-    status: { kind: d.env.production ? "live" : "review" },
-    icon: category.icon,
-    tone: category.tone,
-    installs30d: 0,
-    revenueMonthly: 0,
-    revenueGrowth: 0,
-    subscribers: 0,
-    mau: 0,
-    crashFree: 100,
-    crashNote: "No sessions yet",
-    rating: 0,
-    ratingCount: 0,
-    integrations: [
-      ...(d.ios.enabled ? ["StoreKit 2"] : []),
-      ...(d.android.enabled ? ["Play RTDN"] : []),
-      ...(d.webhook.url ? ["Webhooks"] : []),
-    ],
-    configFlags: 0,
-    recentlyReleased: true,
+    packageName: d.android.enabled ? d.android.packageName.trim() : d.ios.bundleId.trim(),
+    category: d.category,
+    status: d.env.production ? "production" : "testing",
   }
 }
 

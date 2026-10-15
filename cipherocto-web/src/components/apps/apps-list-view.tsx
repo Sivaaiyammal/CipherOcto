@@ -15,7 +15,7 @@ import {
   releaseStatusLabel,
   type PortfolioApp,
 } from "@/data/apps"
-import { formatCompact, formatSignedPercent, usd } from "@/lib/format"
+import { formatCompact, formatSignedPercent, orDash, usd } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 const HEADERS: [string, string][] = [
@@ -78,24 +78,28 @@ export function AppsListView({ apps }: { apps: PortfolioApp[] }) {
                   {releaseStatusLabel(app.status)}
                 </TableCell>
                 <TableCell className="text-right text-sm tabular-nums">
-                  <span className="font-bold text-foreground">{usd.format(app.revenueMonthly)}</span>{" "}
+                  <span className="font-bold text-foreground">{orDash(app.revenueMonthly, usd.format)}</span>{" "}
                   <span
                     className={cn(
                       "text-xs font-semibold",
-                      app.revenueGrowth >= 0 ? "text-mint" : "text-destructive"
+                      app.revenueGrowth === null
+                        ? "text-muted-foreground"
+                        : app.revenueGrowth >= 0
+                          ? "text-mint"
+                          : "text-destructive"
                     )}
                   >
-                    {formatSignedPercent(app.revenueGrowth)}
+                    {app.revenueGrowth === null ? "" : formatSignedPercent(app.revenueGrowth)}
                   </span>
                 </TableCell>
                 <TableCell className="text-right text-sm font-semibold tabular-nums">
-                  {formatCompact(app.mau)}
+                  {orDash(app.mau, formatCompact)}
                 </TableCell>
                 <TableCell className="text-right text-sm font-semibold tabular-nums">
-                  {app.crashFree.toFixed(2)}%
+                  {orDash(app.crashFree, (n) => `${n.toFixed(2)}%`)}
                 </TableCell>
                 <TableCell className="text-right text-sm font-semibold tabular-nums">
-                  {app.rating.toFixed(1)} ★
+                  {orDash(app.rating, (n) => `${n.toFixed(1)} ★`)}
                 </TableCell>
                 <TableCell className="pr-5 text-right">
                   <Button asChild variant="outline" size="sm" className="h-8 rounded-lg text-xs font-semibold">

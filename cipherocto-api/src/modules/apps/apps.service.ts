@@ -32,7 +32,7 @@ export class AppsService {
 
   async create(
     actor: AuthContext,
-    input: { name: string; packageName: string; slug?: string; status?: AppStatus; owner?: string; techStack?: string; playConsoleUrl?: string },
+    input: { name: string; packageName: string; slug?: string; status?: AppStatus; owner?: string; category?: string; techStack?: string; playConsoleUrl?: string },
     ip: string
   ) {
     const taken = await this.repo.allSlugs()
@@ -43,6 +43,7 @@ export class AppsService {
       slug,
       status: input.status ?? "development",
       owner: input.owner ?? "",
+      category: input.category ?? "",
       techStack: input.techStack ?? "",
       playConsoleUrl: input.playConsoleUrl ?? "",
     })
@@ -53,7 +54,7 @@ export class AppsService {
   async update(
     actor: AuthContext,
     id: string,
-    patch: { name?: string; slug?: string; status?: AppStatus; owner?: string; techStack?: string; playConsoleUrl?: string },
+    patch: { name?: string; slug?: string; status?: AppStatus; owner?: string; category?: string; techStack?: string; playConsoleUrl?: string },
     ip: string
   ) {
     const app = await this.get(id)

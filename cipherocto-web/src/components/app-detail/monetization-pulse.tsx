@@ -22,7 +22,15 @@ import {
   type PulseMetric,
 } from "@/data/app-details"
 import type { PortfolioApp } from "@/data/apps"
-import { formatCompact, formatCompactUsd, formatSignedPercent, integer, usd } from "@/lib/format"
+import {
+  formatCompact,
+  formatCompactUsd,
+  formatSignedPercent,
+  integer,
+  NO_VALUE,
+  orDash,
+  usd,
+} from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 const METRICS: { value: PulseMetric; label: string; unit: string }[] = [
@@ -64,35 +72,39 @@ function ReleaseCallout({
 
 export function MonetizationPulse({ app, detail }: { app: PortfolioApp; detail: AppDetail }) {
   const [metric, setMetric] = React.useState<PulseMetric>("revenue")
-  const iosShare = detail.iosShare / 100
+  // Store split is only known for single-store apps; unknown → no stacked split.
+  const iosPct = detail.iosShare
+  const iosShare = (iosPct ?? 0) / 100
   const data = React.useMemo(
     () =>
-      getPulseSeries(app, metric, detail.releaseDaysAgo).map((p) => ({
+      getPulseSeries().map((p) => ({
         ...p,
         ios: p.value * iosShare,
         android: p.value * (1 - iosShare),
       })),
-    [app, metric, detail.releaseDaysAgo, iosShare]
+    [iosShare]
   )
 
   const fmt = (v: number) => (metric === "revenue" ? usd.format(v) : integer.format(Math.round(v)))
   const fmtAxis = (v: number) => (metric === "revenue" ? formatCompactUsd(v) : formatCompact(v))
+  const metricUnit = METRICS.find((m) => m.value === metric)?.unit ?? ""
 
   const stats = React.useMemo(() => {
+    if (data.length === 0) return null
     const peak = data.reduce((best, p) => (p.value > best.value ? p : best), data[0])
     const avg = (pts: typeof data) => pts.reduce((s, p) => s + p.value, 0) / Math.max(1, pts.length)
     const weekend = avg(data.filter((p) => p.isWeekend))
     const weekday = avg(data.filter((p) => !p.isWeekend))
     const releaseIdx = data.findIndex((p) => p.isRelease)
-    const before = avg(data.slice(Math.max(0, releaseIdx - 7), releaseIdx))
-    const after = avg(data.slice(releaseIdx))
+    const before = releaseIdx >= 0 ? avg(data.slice(Math.max(0, releaseIdx - 7), releaseIdx)) : 0
+    const after = releaseIdx >= 0 ? avg(data.slice(releaseIdx)) : 0
     const total = data.reduce((s, p) => s + p.value, 0)
     return {
       peak,
       total,
       weekendVelocity: weekday ? (weekend / weekday - 1) * 100 : 0,
       releaseLift: before ? (after / before - 1) * 100 : 0,
-      release: data[releaseIdx],
+      release: releaseIdx >= 0 ? data[releaseIdx] : undefined,
       // Keep the annotation inside the plot: put it left of the marker late in the range
       labelOnLeft: releaseIdx > data.length / 2,
     }
@@ -100,16 +112,26 @@ export function MonetizationPulse({ app, detail }: { app: PortfolioApp; detail: 
 
   const thirdStat =
     metric === "revenue"
-      ? { label: "Refund Rate", value: `${detail.refundRate.toFixed(2)}%`, note: "Under benchmark" }
+      ? {
+          label: "Refund Rate",
+          value: orDash(detail.refundRate, (n) => `${n.toFixed(2)}%`),
+          note: detail.refundRate === null ? "Not connected" : "Under benchmark",
+        }
       : metric === "installs"
         ? {
             label: "Avg Daily Installs",
-            value: integer.format(Math.round(stats.total / data.length)),
-            note: "last 30 days",
+            value: stats ? integer.format(Math.round(stats.total / data.length)) : NO_VALUE,
+            note: stats ? "last 30 days" : "Not connected",
           }
-        : { label: "Trial → Paid", value: `${detail.trialToPaid}%`, note: `Variant ${detail.paywallVariant}` }
+        : {
+            label: "Trial → Paid",
+            value: orDash(detail.trialToPaid, (n) => `${n}%`),
+            note: detail.paywallVariant ? `Variant ${detail.paywallVariant}` : "Not connected",
+          }
 
-  const hasBoth = detail.iosShare > 0 && detail.iosShare < 100
+  const showApple = iosPct !== null && iosPct > 0
+  const showGoogle = iosPct !== null && iosPct < 100
+  const hasBoth = iosPct !== null && iosPct > 0 && iosPct < 100
 
   return (
     <section className="flex min-w-0 flex-col gap-5 rounded-2xl border border-border/60 bg-card p-5 shadow-[var(--shadow-1)] lg:p-6">
@@ -151,13 +173,19 @@ export function MonetizationPulse({ app, detail }: { app: PortfolioApp; detail: 
       <dl className="grid grid-cols-1 gap-4 rounded-xl bg-background p-4 @xl/main:grid-cols-3">
         <div>
           <dt className="text-[11px] font-bold tracking-[0.04em] text-subtle-foreground uppercase">
-            Peak Day {METRICS.find((m) => m.value === metric)?.unit}
+            Peak Day {metricUnit}
           </dt>
           <dd className="mt-1 text-lg font-bold text-foreground tabular-nums">
-            {fmt(stats.peak.value)}{" "}
-            <span className="text-xs font-medium text-muted-foreground">
-              / {stats.peak.date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-            </span>
+            {stats ? (
+              <>
+                {fmt(stats.peak.value)}{" "}
+                <span className="text-xs font-medium text-muted-foreground">
+                  / {stats.peak.date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                </span>
+              </>
+            ) : (
+              NO_VALUE
+            )}
           </dd>
         </div>
         <div>
@@ -165,8 +193,14 @@ export function MonetizationPulse({ app, detail }: { app: PortfolioApp; detail: 
             Weekend Velocity
           </dt>
           <dd className="mt-1 text-lg font-bold text-mint tabular-nums">
-            {formatSignedPercent(stats.weekendVelocity)}{" "}
-            <span className="text-xs font-medium text-muted-foreground">over weekday avg</span>
+            {stats ? (
+              <>
+                {formatSignedPercent(stats.weekendVelocity)}{" "}
+                <span className="text-xs font-medium text-muted-foreground">over weekday avg</span>
+              </>
+            ) : (
+              <span className="text-foreground">{NO_VALUE}</span>
+            )}
           </dd>
         </div>
         <div>
@@ -174,106 +208,112 @@ export function MonetizationPulse({ app, detail }: { app: PortfolioApp; detail: 
             {thirdStat.label}
           </dt>
           <dd className="mt-1 text-lg font-bold text-foreground tabular-nums">
-            {thirdStat.value}{" "}
-            <span className="text-xs font-semibold text-mint">({thirdStat.note})</span>
+            {thirdStat.value} <span className="text-xs font-semibold text-mint">({thirdStat.note})</span>
           </dd>
         </div>
       </dl>
 
-      <ChartContainer config={chartConfig} className="aspect-auto h-72 w-full">
-        <ComposedChart data={data} margin={{ top: 40, right: 8, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id={`pulse-${app.id}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--mint-border)" stopOpacity={0.55} />
-              <stop offset="100%" stopColor="var(--mint-border)" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
-          <XAxis
-            dataKey="label"
-            tickLine={false}
-            axisLine={{ stroke: "var(--border)" }}
-            minTickGap={28}
-            tickMargin={8}
-          />
-          <YAxis width={56} tickLine={false} axisLine={false} tickFormatter={fmtAxis} />
-          <ChartTooltip
-            cursor={{ fill: "var(--foreground)", fillOpacity: 0.04 }}
-            content={
-              <ChartTooltipContent
-                formatter={(value, name) => (
-                  <div className="flex w-full justify-between gap-4">
-                    <span className="text-muted-foreground">
-                      {chartConfig[name as keyof typeof chartConfig]?.label ?? name}
-                    </span>
-                    <span className="font-bold tabular-nums">{fmt(Number(value))}</span>
-                  </div>
-                )}
-              />
-            }
-          />
-          <Area
-            dataKey="trend"
-            type="monotone"
-            stroke="var(--color-trend)"
-            strokeWidth={2.5}
-            fill={`url(#pulse-${app.id})`}
-            dot={false}
-            activeDot={{ r: 4 }}
-          />
-          {detail.iosShare > 0 && (
-            <Bar dataKey="ios" stackId="platform" fill="var(--color-ios)" maxBarSize={14} />
-          )}
-          {detail.iosShare < 100 && (
-            <Bar
-              dataKey="android"
-              stackId="platform"
-              fill="var(--color-android)"
-              radius={[3, 3, 0, 0]}
-              maxBarSize={14}
+      {stats ? (
+        <ChartContainer config={chartConfig} className="aspect-auto h-72 w-full">
+          <ComposedChart data={data} margin={{ top: 40, right: 8, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id={`pulse-${app.id}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--mint-border)" stopOpacity={0.55} />
+                <stop offset="100%" stopColor="var(--mint-border)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="4 4" />
+            <XAxis
+              dataKey="label"
+              tickLine={false}
+              axisLine={{ stroke: "var(--border)" }}
+              minTickGap={28}
+              tickMargin={8}
             />
-          )}
-          {stats.release && (
-            <ReferenceLine
-              x={stats.release.label}
-              stroke="var(--primary)"
-              strokeDasharray="4 4"
-              label={
-                <ReleaseCallout
-                  alignRight={stats.labelOnLeft}
-                  text={`${stats.release.label}: v${app.version} rollout (${formatSignedPercent(stats.releaseLift)} lift)`}
+            <YAxis width={56} tickLine={false} axisLine={false} tickFormatter={fmtAxis} />
+            <ChartTooltip
+              cursor={{ fill: "var(--foreground)", fillOpacity: 0.04 }}
+              content={
+                <ChartTooltipContent
+                  formatter={(value, name) => (
+                    <div className="flex w-full justify-between gap-4">
+                      <span className="text-muted-foreground">
+                        {chartConfig[name as keyof typeof chartConfig]?.label ?? name}
+                      </span>
+                      <span className="font-bold tabular-nums">{fmt(Number(value))}</span>
+                    </div>
+                  )}
                 />
               }
             />
-          )}
-        </ComposedChart>
-      </ChartContainer>
+            <Area
+              dataKey="trend"
+              type="monotone"
+              stroke="var(--color-trend)"
+              strokeWidth={2.5}
+              fill={`url(#pulse-${app.id})`}
+              dot={false}
+              activeDot={{ r: 4 }}
+            />
+            {showApple && <Bar dataKey="ios" stackId="platform" fill="var(--color-ios)" maxBarSize={14} />}
+            {showGoogle && (
+              <Bar
+                dataKey="android"
+                stackId="platform"
+                fill="var(--color-android)"
+                radius={[3, 3, 0, 0]}
+                maxBarSize={14}
+              />
+            )}
+            {stats.release && (
+              <ReferenceLine
+                x={stats.release.label}
+                stroke="var(--primary)"
+                strokeDasharray="4 4"
+                label={
+                  <ReleaseCallout
+                    alignRight={stats.labelOnLeft}
+                    text={`${stats.release.label}: ${app.version ? `v${app.version} ` : ""}rollout (${formatSignedPercent(stats.releaseLift)} lift)`}
+                  />
+                }
+              />
+            )}
+          </ComposedChart>
+        </ChartContainer>
+      ) : (
+        <div
+          role="status"
+          className="flex h-72 w-full items-center justify-center rounded-xl bg-background px-6 text-center text-[13px] text-muted-foreground"
+        >
+          No {metricUnit.toLowerCase()} data yet. It appears here once Google Play reports are connected.
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-          {detail.iosShare > 0 && (
+          {showApple && (
             <span className="flex items-center gap-1.5 font-semibold text-foreground">
               <span className="size-2.5 rounded-full bg-stream-mrr" />
               Apple App Store:{" "}
               <strong className="tabular-nums">
-                {detail.iosShare}% ({fmt(stats.total * iosShare)})
+                {iosPct}% ({stats ? fmt(stats.total * iosShare) : NO_VALUE})
               </strong>
             </span>
           )}
-          {detail.iosShare < 100 && (
+          {showGoogle && (
             <span className="flex items-center gap-1.5 font-semibold text-muted-foreground">
               <span className="size-2.5 rounded-full bg-stream-iap" />
               Google Play Store:{" "}
               <strong className="text-foreground tabular-nums">
-                {100 - detail.iosShare}% ({fmt(stats.total * (1 - iosShare))})
+                {100 - (iosPct ?? 0)}% ({stats ? fmt(stats.total * (1 - iosShare)) : NO_VALUE})
               </strong>
             </span>
           )}
         </div>
         {hasBoth && (
           <div className="flex h-2 overflow-hidden rounded-full bg-neutral-strong">
-            <div className="h-full bg-stream-mrr" style={{ width: `${detail.iosShare}%` }} />
-            <div className="h-full bg-stream-iap" style={{ width: `${100 - detail.iosShare}%` }} />
+            <div className="h-full bg-stream-mrr" style={{ width: `${iosPct}%` }} />
+            <div className="h-full bg-stream-iap" style={{ width: `${100 - (iosPct ?? 0)}%` }} />
           </div>
         )}
       </div>

@@ -7,11 +7,15 @@ import { QuickRemoteFlags } from "@/components/dashboard/quick-remote-flags"
 import { RevenueByApp } from "@/components/dashboard/revenue-by-app"
 import { RevenueOverview } from "@/components/dashboard/revenue-overview"
 import { WelcomeBanner } from "@/components/dashboard/welcome-banner"
+import { useApps } from "@/data/apps-context"
 
 export default function DashboardPage() {
+  const { apps } = useApps()
+  const liveApps = apps.filter((a) => a.lifecycle === "production").length
+
   return (
     <>
-      <WelcomeBanner liveApps={8} periodLabel="last 30 days" />
+      <WelcomeBanner liveApps={liveApps} totalApps={apps.length} />
       <KpiOverview />
       <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @5xl/main:grid-cols-3">
         <div className="min-w-0 @5xl/main:col-span-2">

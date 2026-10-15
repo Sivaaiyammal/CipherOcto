@@ -43,7 +43,15 @@ function ProbeCard({
               <p className="text-xs text-muted-foreground">{subtitle}</p>
             </div>
           </div>
-          {st === "pass" ? <Pill tone="mint">Pass (200 OK)</Pill> : st === "running" ? <Pill tone="blue">Running…</Pill> : <Pill>Queued</Pill>}
+          {st === "pass" ? (
+            <Pill tone="mint">Checks passed</Pill>
+          ) : st === "fail" ? (
+            <Pill>Needs fixes</Pill>
+          ) : st === "running" ? (
+            <Pill tone="blue">Running…</Pill>
+          ) : (
+            <Pill>Queued</Pill>
+          )}
         </div>
         <dl className="space-y-1 rounded-xl bg-background p-2.5 text-xs">
           {rows.map(([k, val]) => (
@@ -82,7 +90,7 @@ function ProbeCard({
         className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-foreground/[0.05] text-[13px] font-semibold text-foreground transition-colors hover:bg-foreground/[0.09] disabled:opacity-60"
       >
         {st === "running" ? <Loader2Icon className="size-4 animate-spin" /> : <RefreshCwIcon className="size-4" />}
-        {st === "running" ? `Validating ${title}…` : `Re-run ${title.split(" ")[0]} Ping`}
+        {st === "running" ? `Validating ${title}…` : `Re-run ${title.split(" ")[0]} Checks`}
       </button>
     </div>
   )
@@ -106,9 +114,9 @@ export function StepVerification({ draft, v }: { draft: RegisterDraft; v: Verifi
   const health = v.targets.length ? Math.round((passed / v.targets.length) * 100) : 0
 
   const ribbon: { label: string; value: string; note: string }[] = [
-    { label: "Apple StoreKit 2", value: draft.ios.enabled ? (v.latency.apple ? `${v.latency.apple}ms` : "—") : "Off", note: "TLS 1.3" },
-    { label: "Google Pub/Sub", value: draft.android.enabled ? (v.latency.google ? `${v.latency.google}ms` : "—") : "Off", note: "ACK'd" },
-    { label: "Webhook Gateway", value: draft.webhook.url ? (v.latency.webhook ? `${v.latency.webhook}ms` : "—") : "Skipped", note: draft.env.hmac ? "HMAC-256" : "Unsigned" },
+    { label: "Apple StoreKit 2", value: draft.ios.enabled ? "Pending" : "Off", note: "Not connected" },
+    { label: "Google Pub/Sub", value: draft.android.enabled ? "Pending" : "Off", note: "Not connected" },
+    { label: "Webhook Gateway", value: draft.webhook.url ? "Pending" : "Skipped", note: draft.env.hmac ? "HMAC-256" : "Unsigned" },
     { label: "Health Index", value: `${health}%`, note: `${passed}/${v.targets.length} Valid` },
   ]
 
@@ -123,11 +131,11 @@ export function StepVerification({ draft, v }: { draft: RegisterDraft; v: Verifi
                 v.allPassed ? "bg-mint-hover text-mint" : "bg-blue-hover text-tertiary"
               )}
             >
-              {v.allPassed ? <BadgeCheckIcon /> : <Loader2Icon className="animate-spin" />}
+              {v.allPassed ? <BadgeCheckIcon /> : v.anyRunning ? <Loader2Icon className="animate-spin" /> : <RefreshCwIcon />}
             </span>
             <div>
               <h2 className="text-lg leading-[26px] font-bold text-foreground">
-                {v.allPassed ? "All Systems Verified & Cryptographically Signed" : "Running verification probes…"}
+                {v.allPassed ? "Registration Checks Passed" : v.anyRunning ? "Running registration checks…" : "Some checks need attention"}
               </h2>
               <p className="text-[13px] text-muted-foreground">
                 {[draft.ios.enabled && "StoreKit 2 server API", draft.android.enabled && "Google Play RTDN topic", draft.webhook.url && "webhook endpoint"]
@@ -136,7 +144,7 @@ export function StepVerification({ draft, v }: { draft: RegisterDraft; v: Verifi
               </p>
             </div>
           </div>
-          {v.allPassed && <Pill tone="solid-mint" className="self-start px-3 py-1 uppercase sm:self-auto">Ready for Production</Pill>}
+          {v.allPassed && <Pill tone="solid-mint" className="self-start px-3 py-1 uppercase sm:self-auto">Ready to Register</Pill>}
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {ribbon.map((r) => (
@@ -190,9 +198,9 @@ export function StepVerification({ draft, v }: { draft: RegisterDraft; v: Verifi
               <span className="size-3 rounded-full bg-mint-border" />
               <span className="size-3 rounded-full bg-sidebar-foreground" />
             </span>
-            <span className="truncate font-sans text-[13px] font-bold">Ping &amp; Signature Verification Stream</span>
+            <span className="truncate font-sans text-[13px] font-bold">Registration Check Stream</span>
             <span className="rounded bg-white/10 px-1.5 py-0.5 font-sans text-[10px] font-bold tracking-[0.04em] text-sidebar-foreground uppercase">
-              Simulated
+              Local checks
             </span>
           </div>
           <button
@@ -226,12 +234,12 @@ export function StepVerification({ draft, v }: { draft: RegisterDraft; v: Verifi
             <ShieldCheckIcon className="size-5 text-mint" />
             Security &amp; Compliance
           </span>
-          <span className="text-xs font-bold tracking-[0.04em] text-mint uppercase">Zero-Trust</span>
+          <span className="text-xs font-bold tracking-[0.04em] text-mint uppercase">Secure Defaults</span>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {[
-            ["Transport", "TLS 1.3 only", "Older protocols rejected"],
-            ["Credential Storage", "Encrypted at rest", "Keys never leave the vault"],
+            ["Transport", "HTTPS only", "Webhook endpoints must be HTTPS"],
+            ["Credential Storage", "Not saved in the draft", "Keys are never stored in your browser"],
             ["Payload Security", draft.env.hmac ? "HMAC-SHA256 signed" : "Signature off", draft.env.hmac ? "Replay protection active" : "Enable in Step 1"],
           ].map(([k, val, note]) => (
             <div key={k} className="rounded-xl bg-background p-2.5">

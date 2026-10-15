@@ -19,10 +19,10 @@ const chipBase =
 
 export function WelcomeBanner({
   liveApps,
-  periodLabel,
+  totalApps,
 }: {
   liveApps: number
-  periodLabel: string
+  totalApps: number
 }) {
   const currentUser = useCurrentUser()
   return (
@@ -35,11 +35,11 @@ export function WelcomeBanner({
           </span>
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Here&apos;s what happened with your{" "}
+          Here&apos;s what&apos;s happening across your{" "}
           <strong className="font-semibold text-foreground">
-            {liveApps} live apps
+            {totalApps} {totalApps === 1 ? "app" : "apps"}
           </strong>{" "}
-          over the {periodLabel}.
+          ({liveApps} in production).
         </p>
       </div>
 

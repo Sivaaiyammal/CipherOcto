@@ -2,6 +2,7 @@ import {
   EXPENSE_SPLIT,
   formatCompactUsd,
 } from "@/components/dashboard/revenue-data"
+import { NO_VALUE } from "@/lib/format"
 
 export function ExpenseSplit() {
   const total = EXPENSE_SPLIT.reduce((sum, e) => sum + e.value, 0)
@@ -13,13 +14,18 @@ export function ExpenseSplit() {
           Operational Expense Split
         </h2>
         <span className="text-xs text-muted-foreground tabular-nums">
-          {formatCompactUsd(total)} Total
+          {EXPENSE_SPLIT.length > 0 ? formatCompactUsd(total) : NO_VALUE} Total
         </span>
       </header>
 
       <ul className="flex flex-col gap-3">
+        {EXPENSE_SPLIT.length === 0 && (
+          <li className="text-xs text-muted-foreground">
+            No expenses recorded yet. Hosting, salaries and ad spend appear here once the finance module is connected.
+          </li>
+        )}
         {EXPENSE_SPLIT.map((e) => {
-          const pct = Math.round((e.value / total) * 100)
+          const pct = total > 0 ? Math.round((e.value / total) * 100) : 0
           return (
             <li key={e.label} className="flex flex-col gap-1.5">
               <div className="flex items-start justify-between gap-3 text-xs">

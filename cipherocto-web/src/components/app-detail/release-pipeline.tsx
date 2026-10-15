@@ -42,6 +42,11 @@ export function ReleasePipeline({ builds }: { builds: PipelineBuild[] }) {
       </header>
 
       <ul className="flex flex-col gap-2.5">
+        {builds.length === 0 && (
+          <li className="rounded-xl bg-background p-4 text-[13px] text-muted-foreground">
+            No builds tracked yet. Release history and staged rollouts appear once the releases module is connected.
+          </li>
+        )}
         {builds.map((build) => {
           const candidate = build.stage === "candidate"
           return (

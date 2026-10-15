@@ -31,3 +31,12 @@ export function formatCompact(value: number) {
 export function formatSignedPercent(value: number, digits = 1) {
   return `${value > 0 ? "+" : ""}${value.toFixed(digits)}%`
 }
+
+// ── Null-safe variants ────────────────────────────────────────────────────
+// Metrics the backend can't supply yet (revenue, installs, ratings…) are `null`.
+// They render as an em dash, never as a made-up number.
+
+export const NO_VALUE = "—"
+
+export const orDash = (value: number | null | undefined, format: (n: number) => string) =>
+  value === null || value === undefined ? NO_VALUE : format(value)

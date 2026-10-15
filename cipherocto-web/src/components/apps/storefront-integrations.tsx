@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Link } from "react-router-dom"
 import {
   PlayIcon,
   ShieldCheckIcon,
@@ -8,6 +9,8 @@ import {
 
 import { Button } from "@/components/ui/button"
 import type { PortfolioApp } from "@/data/apps"
+import { useAuth } from "@/data/auth-context"
+import { billingApi, type SubscriptionSummary } from "@/lib/billing-api"
 import { cn } from "@/lib/utils"
 
 type IntegrationStatus = "connected" | "degraded" | "disconnected"
@@ -15,7 +18,7 @@ type IntegrationStatus = "connected" | "degraded" | "disconnected"
 const STATUS_PILL: Record<IntegrationStatus, { label: string; className: string }> = {
   connected: { label: "Connected", className: "bg-mint-border/70 text-mint" },
   degraded: { label: "Degraded", className: "bg-amber-surface text-amber" },
-  disconnected: { label: "Disconnected", className: "bg-pink-hover text-pink" },
+  disconnected: { label: "Not connected", className: "bg-pink-hover text-pink" },
 }
 
 type Integration = {
@@ -32,8 +35,26 @@ function pluralApps(n: number) {
 }
 
 export function StorefrontIntegrations({ apps }: { apps: PortfolioApp[] }) {
-  // Mock connection state until the integrations API is wired up; app counts
-  // come from the live portfolio.
+  // Connection state is real where the backend knows it: Google Play verification and
+  // RTDN come from each app's subscription summary. App Store / Stripe aren't built yet.
+  const { can } = useAuth()
+  const canSeeSubs = can("subscriptions:read")
+  const [summaries, setSummaries] = React.useState<SubscriptionSummary[] | null>(null)
+
+  const enabled = canSeeSubs && apps.length > 0
+  React.useEffect(() => {
+    if (!enabled) return
+    const ctrl = new AbortController()
+    Promise.all(apps.map((a) => billingApi.summary(a.id, ctrl.signal).catch(() => null))).then((all) => {
+      if (!ctrl.signal.aborted) setSummaries(all.filter((s): s is SubscriptionSummary => s !== null))
+    })
+    return () => ctrl.abort()
+  }, [apps, enabled])
+
+  const known = enabled ? summaries : null
+  const playVerified = known?.some((s) => s.verificationConfigured) ?? false
+  const playNotified = known?.some((s) => s.notificationsConfigured) ?? false
+
   const appleApps = apps.filter((a) =>
     a.platforms.some((p) => p === "ios" || p === "watchos" || p === "macos")
   ).length
@@ -43,24 +64,32 @@ export function StorefrontIntegrations({ apps }: { apps: PortfolioApp[] }) {
     {
       id: "asc",
       name: "App Store Connect API",
-      detail: `Key ID: #8K92F1A • ${pluralApps(appleApps)}`,
-      status: "connected",
+      detail: `App Store support is planned • ${pluralApps(appleApps)}`,
+      status: "disconnected",
       icon: <SmartphoneIcon />,
       iconClass: "text-foreground",
     },
     {
       id: "play",
       name: "Google Play Console RTDN",
-      detail: `Pub/Sub Stream Live • ${pluralApps(playApps)}`,
-      status: "connected",
+      detail: `${
+        !canSeeSubs
+          ? "Status needs subscriptions access"
+          : playNotified
+            ? "Pub/Sub notifications on"
+            : playVerified
+              ? "Purchase verification on, notifications off"
+              : "Add Play credentials in Billing Setup"
+      } • ${pluralApps(playApps)}`,
+      status: playVerified && playNotified ? "connected" : playVerified ? "degraded" : "disconnected",
       icon: <PlayIcon />,
       iconClass: "text-mint",
     },
     {
       id: "stripe",
       name: "Stripe Custom Webhooks",
-      detail: "USD, EUR, GBP Multi-currency",
-      status: "connected",
+      detail: "Not available yet",
+      status: "disconnected",
       icon: <span className="text-sm font-bold">S</span>,
       iconClass: "text-lavender",
     },
@@ -77,7 +106,7 @@ export function StorefrontIntegrations({ apps }: { apps: PortfolioApp[] }) {
             Real-time status of multi-tenant app store APIs and webhook listeners.
           </p>
         </div>
-        <span title="All systems nominal" className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-foreground/[0.04] text-mint">
+        <span title={playVerified && playNotified ? "Google Play connected" : "Some integrations are not connected"} className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-foreground/[0.04] text-mint">
           <ShieldCheckIcon className="size-4.5" />
         </span>
       </header>
@@ -124,10 +153,10 @@ export function StorefrontIntegrations({ apps }: { apps: PortfolioApp[] }) {
       </ul>
 
       <footer className="mt-auto flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <span>Security audit verified yesterday at 18:40 UTC</span>
-        <a href="#" className="font-bold text-mint hover:underline">
+        <span>Google Play status comes from your apps' billing setup.</span>
+        <Link to="/billing" className="font-bold text-mint hover:underline">
           Manage Keys
-        </a>
+        </Link>
       </footer>
     </section>
   )

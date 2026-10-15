@@ -26,7 +26,7 @@ import {
 } from "@/data/apps"
 import { useApps } from "@/data/apps-context"
 import { exportAppsCsv } from "@/lib/export-apps-csv"
-import { integer as number, usd } from "@/lib/format"
+import { integer as number, orDash, usd } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 4
@@ -42,6 +42,9 @@ function StatusPill({ status }: { status: ReleaseStatus }) {
     live: "bg-mint-hover text-mint [--dot:var(--mint)]",
     review: "bg-neutral-strong text-foreground/80 [--dot:var(--foreground)]",
     staged: "bg-blue-hover text-tertiary [--dot:var(--tertiary)]",
+    development: "bg-neutral-strong text-foreground/80 [--dot:var(--foreground)]",
+    maintenance: "bg-blue-hover text-tertiary [--dot:var(--tertiary)]",
+    archived: "bg-neutral-strong text-subtle-foreground [--dot:var(--subtle-foreground)]",
   }[status.kind]
 
   return (
@@ -58,7 +61,7 @@ function StatusPill({ status }: { status: ReleaseStatus }) {
 }
 
 export function AppsPortfolio() {
-  const { apps: APPS } = useApps()
+  const { apps: APPS, status: appsStatus, error: appsError, refresh } = useApps()
   const [query, setQuery] = React.useState("")
   const [platform, setPlatform] = React.useState<Platform | "all">("all")
   const [page, setPage] = React.useState(1)
@@ -88,11 +91,11 @@ export function AppsPortfolio() {
               Apps Portfolio Performance
             </h2>
             <span className="rounded-full bg-mint-hover px-2 py-0.5 text-[11px] font-bold text-mint">
-              {APPS.length} Active
+              {APPS.filter((a) => a.lifecycle !== "archived").length} Active
             </span>
           </div>
           <p className="text-[13px] text-muted-foreground">
-            Real-time sync from App Store Connect &amp; Google Play Console.
+            Your registered apps. Installs and revenue appear once Google Play reporting is connected.
           </p>
         </div>
 
@@ -198,7 +201,9 @@ export function AppsPortfolio() {
                         {app.name}
                       </Link>
                       <p className="text-xs text-muted-foreground">
-                        v{app.version} • Build {app.build}
+                        {app.version !== null && app.build !== null
+                          ? `v${app.version} • Build ${app.build}`
+                          : app.bundleId}
                       </p>
                     </div>
                   </div>
@@ -207,16 +212,16 @@ export function AppsPortfolio() {
                   {app.category}
                 </TableCell>
                 <TableCell className="text-right text-sm font-semibold text-foreground">
-                  {number.format(app.installs30d)}
+                  {orDash(app.installs30d, number.format)}
                 </TableCell>
                 <TableCell className="text-right text-sm whitespace-nowrap">
                   <span className="font-bold text-foreground">
-                    {usd.format(app.revenueMonthly)}
+                    {orDash(app.revenueMonthly, usd.format)}
                   </span>{" "}
                   <span className="text-xs text-muted-foreground">/mo</span>
                 </TableCell>
                 <TableCell className="text-right text-sm font-semibold text-foreground">
-                  {number.format(app.subscribers)}
+                  {orDash(app.subscribers, number.format)}
                 </TableCell>
                 <TableCell className="pl-6">
                   <StatusPill status={app.status} />
@@ -276,7 +281,20 @@ export function AppsPortfolio() {
                 colSpan={7}
                 className="h-24 text-center text-sm text-subtle-foreground"
               >
-                No apps match your filters.
+                {appsStatus === "loading"
+                  ? "Loading apps…"
+                  : appsStatus === "error"
+                    ? (
+                        <>
+                          {appsError ?? "Couldn't load apps."}{" "}
+                          <button type="button" className="font-semibold underline" onClick={() => void refresh()}>
+                            Retry
+                          </button>
+                        </>
+                      )
+                    : APPS.length === 0
+                      ? "No apps yet. Add your first app to get started."
+                      : "No apps match your filters."}
               </TableCell>
             </TableRow>
           )}

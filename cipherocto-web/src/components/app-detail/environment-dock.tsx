@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Link } from "react-router-dom"
 
 import type { PipelineBuild } from "@/data/app-insights"
 import type { PortfolioApp } from "@/data/apps"
@@ -8,16 +9,19 @@ export function EnvironmentDock({
   app,
   candidate,
   buildHash,
+  notificationsConfigured = null,
 }: {
   app: PortfolioApp
   candidate: PipelineBuild | undefined
-  buildHash: string
+  buildHash: string | null
+  /** Play RTDN status from the subscription backend; null while unknown. */
+  notificationsConfigured?: boolean | null
 }) {
   const apple = app.platforms.some((p) => p === "ios" || p === "watchos" || p === "macos")
   const android = app.platforms.includes("android")
 
   const environments = [
-    { id: "production", label: `Production Live (v${app.version})` },
+    { id: "production", label: app.version ? `Production Live (v${app.version})` : "Production Live" },
     ...(apple && candidate
       ? [{ id: "testflight", label: `TestFlight Beta (v${candidate.version} #${candidate.build})` }]
       : []),
@@ -55,18 +59,29 @@ export function EnvironmentDock({
       <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
         {apple && (
           <li className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-mint" />
-            StoreKit Server V2: <strong className="text-foreground">Healthy</strong>
+            <span className="size-2 rounded-full bg-subtle-foreground" />
+            StoreKit Server V2: <strong className="text-foreground">Not connected</strong>
           </li>
         )}
         {android && (
           <li className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-mint" />
-            Google Play RTDN: <strong className="text-foreground">0ms Lag</strong>
+            <span
+              className={cn("size-2 rounded-full", notificationsConfigured ? "bg-mint" : "bg-subtle-foreground")}
+            />
+            Google Play RTDN:{" "}
+            <strong className="text-foreground">
+              {notificationsConfigured === null ? "—" : notificationsConfigured ? "Configured" : "Not configured"}
+            </strong>
           </li>
         )}
         <li>
-          Build Hash: <strong className="font-mono text-foreground">{buildHash}</strong>
+          Privacy page:{" "}
+          <Link to="/policies" className="font-mono font-semibold text-mint hover:underline">
+            /{app.slug}/privacy
+          </Link>
+        </li>
+        <li>
+          Build Hash: <strong className="font-mono text-foreground">{buildHash ?? "—"}</strong>
         </li>
       </ul>
     </section>

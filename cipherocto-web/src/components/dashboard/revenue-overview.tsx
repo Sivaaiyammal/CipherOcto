@@ -10,6 +10,7 @@ import {
 import {
   formatCompactUsd,
   getRevenueData,
+  hasRevenueData,
   usd,
   type RevenuePeriod,
   type RevenueRow,
@@ -63,9 +64,11 @@ const chartConfig = {
 function BreakdownTooltip({
   active,
   payload,
+  empty,
 }: {
   active?: boolean
   payload?: { payload: RevenueRow }[]
+  empty?: boolean
 }) {
   const row = payload?.[0]?.payload
   if (!active || !row) return null
@@ -79,7 +82,7 @@ function BreakdownTooltip({
         {STREAMS.map((s) => (
           <React.Fragment key={s.key}>
             <dt className="text-primary-foreground/75">{s.tooltipLabel}:</dt>
-            <dd className="text-right font-bold">{usd.format(row[s.key])}</dd>
+            <dd className="text-right font-bold">{empty ? "—" : usd.format(row[s.key])}</dd>
           </React.Fragment>
         ))}
       </dl>
@@ -158,6 +161,7 @@ export function RevenueOverview() {
   const [hidden, setHidden] = React.useState<Set<StreamKey>>(new Set())
   const data = React.useMemo(() => getRevenueData(period), [period])
   const lastIndex = data.length - 1
+  const empty = !hasRevenueData(data)
 
   const toggleStream = (key: StreamKey) =>
     setHidden((prev) => {
@@ -227,6 +231,12 @@ export function RevenueOverview() {
         })}
       </div>
 
+      <div className="relative">
+      {empty && (
+        <p className="pointer-events-none absolute inset-x-0 top-1/2 z-10 -translate-y-1/2 text-center text-[13px] text-muted-foreground">
+          No revenue imported yet. Connect Google Play to see it here.
+        </p>
+      )}
       <ChartContainer config={chartConfig} className="aspect-auto h-64 w-full">
         <BarChart data={data} barGap={6} barCategoryGap="12%" margin={{ left: 0, right: 0, top: 8 }}>
           <CartesianGrid vertical={false} stroke="var(--border)" />
@@ -248,7 +258,7 @@ export function RevenueOverview() {
           <ChartTooltip
             cursor={false}
             defaultIndex={lastIndex}
-            content={<BreakdownTooltip />}
+            content={<BreakdownTooltip empty={empty} />}
           />
           {STREAMS.map((s) => (
             <Bar
@@ -272,30 +282,31 @@ export function RevenueOverview() {
           ))}
         </BarChart>
       </ChartContainer>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 rounded-xl bg-foreground/[0.035] p-4 @xl/main:grid-cols-3">
         <SummaryStat
           icon={<UserRoundIcon />}
           tone="bg-mint-border/70 text-mint"
           label="Avg. Revenue / User"
-          value="$4.32"
-          note="(+6%)"
+          value="—"
+          note=""
           noteClass="text-mint"
         />
         <SummaryStat
           icon={<Undo2Icon />}
           tone="bg-neutral-strong text-foreground"
           label="Refund Rate"
-          value="0.38%"
-          note="(Very Low)"
+          value="—"
+          note=""
           noteClass="text-mint"
         />
         <SummaryStat
           icon={<TrendingUpIcon />}
           tone="bg-blue-hover text-tertiary"
           label="Annual Run Rate (ARR)"
-          value="$2.21M"
-          note="paced"
+          value="—"
+          note=""
           noteClass="text-muted-foreground"
         />
       </div>

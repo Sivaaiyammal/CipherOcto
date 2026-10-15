@@ -27,27 +27,35 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { getAppDetail } from "@/data/app-details"
-import { getCatalog } from "@/data/app-insights"
-import { APP_QUOTA, type PortfolioApp, type ReleaseStatus } from "@/data/apps"
+import { type PortfolioApp, type ReleaseStatus } from "@/data/apps"
 import { useApps } from "@/data/apps-context"
 import { useAuth } from "@/data/auth-context"
+import { billingApi } from "@/lib/billing-api"
 import { exportAppsCsv } from "@/lib/export-apps-csv"
 import { cn } from "@/lib/utils"
 
+// Unknown metrics (null) sort last, so apps without data never outrank apps with it.
+const known = (n: number | null, fallback: number) => n ?? fallback
+
 const SORTS = {
-  "mrr-desc": { label: "MRR (High to Low)", compare: (a: PortfolioApp, b: PortfolioApp) => b.revenueMonthly - a.revenueMonthly },
-  "mrr-asc": { label: "MRR (Low to High)", compare: (a: PortfolioApp, b: PortfolioApp) => a.revenueMonthly - b.revenueMonthly },
-  "mau-desc": { label: "Active Users", compare: (a: PortfolioApp, b: PortfolioApp) => b.mau - a.mau },
-  "rating-desc": { label: "Store Rating", compare: (a: PortfolioApp, b: PortfolioApp) => b.rating - a.rating },
+  "mrr-desc": { label: "MRR (High to Low)", compare: (a: PortfolioApp, b: PortfolioApp) => known(b.revenueMonthly, -1) - known(a.revenueMonthly, -1) },
+  "mrr-asc": { label: "MRR (Low to High)", compare: (a: PortfolioApp, b: PortfolioApp) => known(a.revenueMonthly, 1e15) - known(b.revenueMonthly, 1e15) },
+  "mau-desc": { label: "Active Users", compare: (a: PortfolioApp, b: PortfolioApp) => known(b.mau, -1) - known(a.mau, -1) },
+  "rating-desc": { label: "Store Rating", compare: (a: PortfolioApp, b: PortfolioApp) => known(b.rating, -1) - known(a.rating, -1) },
   "name-asc": { label: "Name (A–Z)", compare: (a: PortfolioApp, b: PortfolioApp) => a.name.localeCompare(b.name) },
 } as const
 
 const STATUS_FILTERS: { kind: ReleaseStatus["kind"]; label: string; className: string }[] = [
   { kind: "live", label: "Live Prod", className: "text-mint" },
   { kind: "staged", label: "Staged Rollout", className: "text-tertiary" },
-  { kind: "review", label: "In Review", className: "text-foreground/70" },
+  { kind: "review", label: "In Testing", className: "text-foreground/70" },
+  { kind: "development", label: "In Development", className: "text-foreground/70" },
+  { kind: "maintenance", label: "Maintenance", className: "text-tertiary" },
+  { kind: "archived", label: "Archived", className: "text-muted-foreground" },
 ]
+
+const UNCATEGORIZED = "Uncategorized"
+const categoryOf = (a: PortfolioApp) => a.category || UNCATEGORIZED
 
 type SortKey = keyof typeof SORTS
 type View = "grid" | "list"
@@ -56,7 +64,7 @@ const chip =
   "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold whitespace-nowrap transition-colors"
 
 export default function AppsPage() {
-  const { apps, promote: promoteApp } = useApps()
+  const { apps, status: loadStatus, error: loadError, refresh } = useApps()
   const [category, setCategory] = React.useState<string>("all")
   const [status, setStatus] = React.useState<ReleaseStatus["kind"] | null>(null)
   const [query, setQuery] = React.useState("")
@@ -65,38 +73,51 @@ export default function AppsPage() {
 
   const categories = React.useMemo(() => {
     const counts = new Map<string, number>()
-    for (const app of apps) counts.set(app.category, (counts.get(app.category) ?? 0) + 1)
+    for (const app of apps) counts.set(categoryOf(app), (counts.get(categoryOf(app)) ?? 0) + 1)
     return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
   }, [apps])
 
-  // Search also matches catalog SKU ids (e.g. "sub_annual")
-  const skuIndex = React.useMemo(
-    () =>
-      new Map(
-        apps.map((a) => [a.id, getCatalog(a, getAppDetail(a)).map((s) => s.id.toLowerCase())])
-      ),
-    [apps]
-  )
+  // Search also matches the app's mapped Play product ids (e.g. "sub_annual"), loaded
+  // from the subscription backend when the role may read them.
+  const { can } = useAuth()
+  const canReadProducts = can("subscriptions:read")
+  const [skuIndex, setSkuIndex] = React.useState<Map<string, string[]>>(new Map())
+  React.useEffect(() => {
+    if (!canReadProducts || apps.length === 0) return
+    const ctrl = new AbortController()
+    Promise.all(
+      apps.map((a) =>
+        billingApi
+          .listProducts(a.id, ctrl.signal)
+          .then((ps) => [a.id, ps.map((p) => p.productId.toLowerCase())] as const)
+          .catch(() => [a.id, [] as string[]] as const)
+      )
+    ).then((entries) => {
+      if (!ctrl.signal.aborted) setSkuIndex(new Map(entries))
+    })
+    return () => ctrl.abort()
+  }, [apps, canReadProducts])
 
   const visible = React.useMemo(() => {
     const q = query.trim().toLowerCase()
     return apps
       .filter(
         (a) =>
-          (category === "all" || a.category === category) &&
+          (category === "all" || categoryOf(a) === category) &&
           (!status || a.status.kind === status) &&
           (!q ||
             a.name.toLowerCase().includes(q) ||
             a.bundleId.toLowerCase().includes(q) ||
+            a.slug.toLowerCase().includes(q) ||
             skuIndex.get(a.id)?.some((sku) => sku.includes(q)))
       )
       .sort(SORTS[sort].compare)
   }, [apps, category, status, query, sort, skuIndex])
 
-  const promote = (app: PortfolioApp) => promoteApp(app.id)
-  const slotsLeft = APP_QUOTA - apps.length
-  const { can } = useAuth()
+  // Staged rollouts need the releases module; the controls are disabled until then.
+  const promote = () => undefined
   const canRegister = can("apps:write")
+  const activeApps = apps.filter((a) => a.status.kind !== "archived").length
 
   return (
     <>
@@ -108,7 +129,7 @@ export default function AppsPage() {
             </h1>
             <span className="hidden items-center gap-1.5 rounded-full bg-mint-hover px-2.5 py-0.5 text-[11px] font-bold tracking-[0.04em] text-mint uppercase sm:inline-flex">
               <span className="size-1.5 rounded-full bg-mint motion-safe:animate-pulse" />
-              {apps.length} Active Apps
+              {activeApps} Active Apps
             </span>
           </div>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
@@ -143,12 +164,12 @@ export default function AppsPage() {
             </span>
           </Button>
           <Button
-            asChild={slotsLeft > 0 && canRegister}
+            asChild={canRegister}
             className="h-10 rounded-xl px-4 text-[13px] font-semibold shadow-[var(--shadow-2)] active:scale-[0.98]"
-            disabled={slotsLeft <= 0 || !canRegister}
+            disabled={!canRegister}
             title={canRegister ? undefined : "Your role can't register apps."}
           >
-            {slotsLeft > 0 && canRegister ? (
+            {canRegister ? (
               <Link to="/apps/new">
                 <CirclePlusIcon />
                 Register New App
@@ -290,7 +311,25 @@ export default function AppsPage() {
       </div>
 
       <section aria-label="Applications" className="px-4 lg:px-6">
-        {visible.length === 0 ? (
+        {loadStatus === "loading" ? (
+          <p className="rounded-2xl border border-dashed border-border bg-card/60 p-10 text-center text-sm text-muted-foreground">
+            Loading apps…
+          </p>
+        ) : loadStatus === "error" ? (
+          <div
+            role="alert"
+            className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-card/60 p-10 text-center text-sm text-muted-foreground"
+          >
+            <span>{loadError ?? "Couldn't load your apps."}</span>
+            <Button variant="outline" size="sm" onClick={() => void refresh()}>
+              Retry
+            </Button>
+          </div>
+        ) : apps.length === 0 ? (
+          <div className="grid grid-cols-1 gap-6 @2xl/main:grid-cols-2 @5xl/main:grid-cols-3">
+            <RegisterAppCard locked={!canRegister} />
+          </div>
+        ) : visible.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-border bg-card/60 p-10 text-center text-sm text-muted-foreground">
             No apps match your filters.
           </p>
@@ -299,7 +338,7 @@ export default function AppsPage() {
             {visible.map((app) => (
               <AppCard key={app.id} app={app} onPromote={promote} />
             ))}
-            <RegisterAppCard slotsLeft={slotsLeft} locked={!canRegister} />
+            <RegisterAppCard locked={!canRegister} />
           </div>
         ) : (
           <AppsListView apps={visible} />

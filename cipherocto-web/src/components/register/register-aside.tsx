@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 
 import { Pill } from "@/components/register/fields"
-import { APP_QUOTA, APP_TONE_TILE } from "@/data/apps"
+import { APP_TONE_TILE } from "@/data/apps"
 import { CATEGORIES, platformSummary, validateStep, type RegisterDraft } from "@/data/register"
 import { cn } from "@/lib/utils"
 
@@ -38,11 +38,19 @@ function AppIconTile({ draft, className }: { draft: RegisterDraft; className?: s
   )
 }
 
-export function SetupChecklist({ draft, slotsLeft }: { draft: RegisterDraft; slotsLeft: number }) {
+export function SetupChecklist({ draft, registered }: { draft: RegisterDraft; registered: number }) {
   const items = [
-    { label: "Enterprise Slot Available", detail: `${slotsLeft} slots remaining in Octo Corp Org plan`, done: slotsLeft > 0 },
+    { label: "Workspace Registry Ready", detail: `${registered} app${registered === 1 ? "" : "s"} registered in this workspace`, done: true },
     { label: "Valid Identifiers Defined", detail: `${platformSummary(draft)} packaging validated`, pending: "Bundle ID / package name in Step 01", done: Object.keys(validateStep(0, draft)).length === 0 },
-    { label: "Store API Credentials Linked", detail: "App Store Connect key & Play service account", pending: "Configured in Step 02", done: Object.keys(validateStep(1, draft)).length === 0 },
+    {
+      label: "Store API Credentials Linked",
+      detail: "Credentials attached for verification",
+      pending: "Optional — verified once the store is connected",
+      done:
+        Object.keys(validateStep(1, draft)).length === 0 &&
+        (!draft.ios.enabled || !!draft.ios.p8FileName) &&
+        (!draft.android.enabled || !!draft.android.serviceAccountEmail),
+    },
     { label: "RTDN & Webhooks Routed", detail: "Notification endpoints configured", pending: "Configured in Step 03", done: Object.keys(validateStep(2, draft)).length === 0 && (!draft.android.enabled || !!draft.android.topic) },
   ]
   const done = items.filter((i) => i.done).length
@@ -212,7 +220,7 @@ export function ActivationCard({
             {ready && <BadgeCheckIcon className="size-4 shrink-0 text-mint" />}
           </div>
           <p className="truncate text-xs text-muted-foreground">{draft.category}</p>
-          <span className="mt-0.5 inline-block rounded bg-neutral-strong px-1 py-0.5 font-mono text-[10px] font-semibold text-foreground">v1.0.0</span>
+          <span className="mt-0.5 inline-block rounded bg-neutral-strong px-1 py-0.5 font-mono text-[10px] font-semibold text-foreground">Not released yet</span>
         </div>
       </div>
 
@@ -226,16 +234,16 @@ export function ActivationCard({
         </div>
         <div className="space-y-1 rounded-xl bg-card p-2.5 shadow-[var(--shadow-1)]">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Enterprise App Slots</span>
+            <span className="text-muted-foreground">Workspace Apps</span>
             <span className="text-[11px] font-bold text-foreground tabular-nums">
-              {after} / {APP_QUOTA} used (+1)
+              {usedSlots} → {after} (+1)
             </span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-neutral-strong">
-            <div className="h-full rounded-full bg-stream-mrr transition-[width] duration-500" style={{ width: `${(after / APP_QUOTA) * 100}%` }} />
+            <div className="h-full rounded-full bg-stream-mrr transition-[width] duration-500" style={{ width: `${(usedSlots / after) * 100}%` }} />
           </div>
           <span className="block text-[11px] text-muted-foreground">
-            Consuming 1 of {APP_QUOTA - usedSlots} available slots in Octo Corp Org.
+            This will be app #{after} in your CipherOcto workspace.
           </span>
         </div>
       </div>
@@ -272,9 +280,9 @@ export function PreFlightChecklist({ draft, ready }: { draft: RegisterDraft; rea
   const items = [
     { label: "Application Metadata & Assets", detail: draft.iconDataUrl ? "Custom icon uploaded, category mapped" : "Category icon used — upload one anytime" },
     ...(draft.ios.enabled ? [{ label: "StoreKit 2 In-App API Key", detail: `${draft.ios.p8FileName ?? ".p8"} attached` }] : []),
-    ...(draft.android.enabled ? [{ label: "Google Play Service JSON", detail: "OAuth token exchange verified" }] : []),
-    ...(draft.android.enabled ? [{ label: "RTDN Pub/Sub Topic Push", detail: "Push subscription responding" }] : []),
-    ...(draft.webhook.url ? [{ label: "HMAC-SHA256 Webhook Ping", detail: "Handshake under 200ms target" }] : []),
+    ...(draft.android.enabled ? [{ label: "Google Play Service JSON", detail: "Attached — verified once Google Play is connected" }] : []),
+    ...(draft.android.enabled ? [{ label: "RTDN Pub/Sub Topic Push", detail: "Saved — verified once Google Play is connected" }] : []),
+    ...(draft.webhook.url ? [{ label: "HMAC-SHA256 Webhook Ping", detail: "Saved — test delivery runs once connected" }] : []),
   ]
   return (
     <section className="space-y-4 rounded-2xl bg-card p-6 shadow-[var(--shadow-1)]">
@@ -318,7 +326,7 @@ export function CircuitBreakerCard({ enabled }: { enabled: boolean }) {
       </p>
       <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
         <span>Slack Escalation</span>
-        <span className="font-mono font-semibold text-foreground">#octo-alerts-prod</span>
+        <span className="font-semibold text-foreground">Not configured</span>
       </div>
     </section>
   )

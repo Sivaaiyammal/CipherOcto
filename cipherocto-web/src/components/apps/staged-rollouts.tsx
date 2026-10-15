@@ -14,10 +14,24 @@ import {
   APP_TONE_TILE,
   nextRolloutStep,
   type PortfolioApp,
+  type ReleaseStatus,
 } from "@/data/apps"
+import { NO_VALUE } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-const ORDER = { live: 0, staged: 1, review: 2 } as const
+const ORDER: Record<ReleaseStatus["kind"], number> = {
+  live: 0,
+  staged: 1,
+  review: 2,
+  development: 3,
+  maintenance: 4,
+  archived: 5,
+}
+
+const NOT_CONNECTED = "Releases module not connected yet"
+
+const buildLabel = (app: PortfolioApp) =>
+  app.version ? `v${app.version}${app.build !== null ? ` (${app.build})` : ""}` : NO_VALUE
 
 function storeReviewLabel(app: PortfolioApp) {
   const apple = app.platforms.some((p) => p !== "android" && p !== "web")
@@ -126,13 +140,13 @@ export function StagedRollouts({
                       </Link>
                       {/* Build folds under the name when the Build column is hidden */}
                       <p className="font-mono text-[11px] text-muted-foreground @[44rem]/rollouts:hidden">
-                        v{app.version} ({app.build})
+                        {buildLabel(app)}
                       </p>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell className="hidden font-mono text-xs text-muted-foreground @[44rem]/rollouts:table-cell">
-                  v{app.version} ({app.build})
+                  {buildLabel(app)}
                 </TableCell>
                 <TableCell>
                   {status.kind === "review" ? (
@@ -163,7 +177,8 @@ export function StagedRollouts({
                       variant="ghost"
                       size="sm"
                       onClick={() => onPromote(app)}
-                      title={`Promote to ${nextRolloutStep(status.rollout)}%`}
+                      disabled
+                      title={NOT_CONNECTED}
                       aria-label={`Promote ${app.name} to ${nextRolloutStep(status.rollout)}%`}
                       className="h-8 rounded-lg px-2.5 text-xs font-bold text-mint hover:bg-mint-surface hover:text-mint"
                     >
@@ -172,7 +187,13 @@ export function StagedRollouts({
                     </Button>
                   ) : (
                     status.kind === "live" ? (
-                      <Button variant="ghost" size="sm" className="h-8 rounded-lg px-2.5 text-xs font-semibold">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled
+                        title={NOT_CONNECTED}
+                        className="h-8 rounded-lg px-2.5 text-xs font-semibold"
+                      >
                         Rollback
                       </Button>
                     ) : (

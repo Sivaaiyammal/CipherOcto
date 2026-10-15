@@ -1,4 +1,5 @@
-// Mock remote-config flags until the config service is connected.
+// Remote-config flags shown in the dashboard's quick panel.
+// The config service isn't built yet, so there are no flags to list.
 
 export type RemoteFlag = {
   key: string
@@ -7,25 +8,6 @@ export type RemoteFlag = {
   enabled: boolean
 }
 
-export const QUICK_FLAGS: RemoteFlag[] = [
-  {
-    key: "enable_ai_summary",
-    badge: { label: "90% Rollout", tone: "mint" },
-    description: "HabitOcto & ZenReader AI",
-    enabled: true,
-  },
-  {
-    key: "black_friday_pricing",
-    badge: { label: "Scheduled", tone: "stone" },
-    description: "Global paywall pricing overhaul",
-    enabled: false,
-  },
-  {
-    key: "kill_switch_v1",
-    badge: { label: "Safe", tone: "outline" },
-    description: "Emergency bypass for legacy API clients",
-    enabled: false,
-  },
-]
+export const QUICK_FLAGS: RemoteFlag[] = []
 
-export const TOTAL_FLAGS = 24
+export const TOTAL_FLAGS = 0

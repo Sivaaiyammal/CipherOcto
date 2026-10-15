@@ -22,6 +22,7 @@ const AppView = z.object({
   platform: z.literal("android"),
   status: Status,
   owner: z.string(),
+  category: z.string(),
   techStack: z.string(),
   playConsoleUrl: z.string(),
   createdAt: z.string(),
@@ -44,6 +45,7 @@ const CreateAppBody = z.object({
   slug: z.string().trim().max(40).optional(),
   status: Status.optional(),
   owner: z.string().trim().max(120).optional(),
+  category: z.string().trim().max(60).optional(),
   techStack: z.string().trim().max(200).optional(),
   playConsoleUrl: z.string().trim().max(500).optional(),
 })
@@ -54,6 +56,7 @@ const UpdateAppBody = z
     slug: z.string().trim().min(2).max(40).optional(),
     status: Status.optional(),
     owner: z.string().trim().max(120).optional(),
+    category: z.string().trim().max(60).optional(),
     techStack: z.string().trim().max(200).optional(),
     playConsoleUrl: z.string().trim().max(500).optional(),
   })

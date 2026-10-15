@@ -4,11 +4,14 @@ import type { PortfolioApp } from "@/data/apps"
 
 export type AppsStore = {
   apps: PortfolioApp[]
+  /** "idle" until signed in (or when the role can't read apps). */
+  status: "idle" | "loading" | "ready" | "error"
+  error: string | null
   getApp: (id: string | undefined) => PortfolioApp | undefined
-  /** Advance a staged rollout one step (10 → 25 → 50 → 100 → live). */
-  promote: (id: string) => void
-  /** Register a new app in the portfolio (from the Register New App wizard). */
-  addApp: (app: PortfolioApp) => void
+  /** Re-fetch the portfolio from the API. */
+  refresh: () => Promise<void>
+  /** Insert or replace an app the API just returned (after create / update). */
+  upsert: (app: PortfolioApp) => void
 }
 
 export const AppsContext = React.createContext<AppsStore | null>(null)

@@ -15,6 +15,7 @@ export type BackendApp = {
   platform: "android"
   status: BackendAppStatus
   owner: string
+  category: string
   techStack: string
   playConsoleUrl: string
   createdAt: string
@@ -78,10 +79,22 @@ const enc = encodeURIComponent
 
 export const billingApi = {
   listApps: (signal?: AbortSignal) => api<{ apps: BackendApp[] }>("/admin/apps", { signal }).then((r) => r.apps),
-  createApp: (body: { name: string; packageName: string; owner?: string }) =>
+  createApp: (body: {
+    name: string
+    packageName: string
+    slug?: string
+    status?: BackendAppStatus
+    owner?: string
+    category?: string
+    techStack?: string
+    playConsoleUrl?: string
+  }) =>
     api<{ app: BackendApp }>("/admin/apps", { method: "POST", body }).then((r) => r.app),
 
-  updateApp: (appId: string, body: { slug?: string; name?: string }) =>
+  updateApp: (
+    appId: string,
+    body: { slug?: string; name?: string; status?: BackendAppStatus; owner?: string; category?: string; techStack?: string; playConsoleUrl?: string }
+  ) =>
     api<{ app: BackendApp }>(`/admin/apps/${enc(appId)}`, { method: "PATCH", body }).then((r) => r.app),
 
   privacyPolicy: (appId: string, signal?: AbortSignal) =>

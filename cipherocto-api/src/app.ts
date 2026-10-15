@@ -1,3 +1,5 @@
+import { setServers } from "node:dns"
+
 import fastifyEnv from "@fastify/env"
 import Fastify, { type FastifyInstance } from "fastify"
 import { serializerCompiler, validatorCompiler, type ZodTypeProvider } from "fastify-type-provider-zod"
@@ -76,6 +78,9 @@ export async function buildApp(opts: { env?: Record<string, string | undefined> 
   // Zod schemas drive validation, serialization (no accidental field leaks) and OpenAPI.
   app.setValidatorCompiler(validatorCompiler)
   app.setSerializerCompiler(serializerCompiler)
+
+  // Some networks/VPNs hand Node a local resolver that refuses SRV records (mongodb+srv).
+  if (config.dnsServers.length > 0) setServers(config.dnsServers)
 
   const database = await connectDatabase(config)
   app.decorate("db", database)

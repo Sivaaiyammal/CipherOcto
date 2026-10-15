@@ -154,6 +154,7 @@ export function createModels(conn: Connection) {
           default: "development",
         },
         owner: { type: String, default: "" },
+        category: { type: String, default: "" },
         techStack: { type: String, default: "" },
         playConsoleUrl: { type: String, default: "" },
       },

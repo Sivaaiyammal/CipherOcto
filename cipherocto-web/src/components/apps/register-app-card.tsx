@@ -3,7 +3,7 @@ import { PlusIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
-export function RegisterAppCard({ slotsLeft, locked = false }: { slotsLeft: number; locked?: boolean }) {
+export function RegisterAppCard({ locked = false }: { locked?: boolean }) {
   return (
     <article className="group flex min-h-[300px] flex-col items-center justify-center gap-4 rounded-[18px] bg-foreground/[0.03] p-6 text-center transition-colors hover:bg-foreground/[0.05]">
       <span className="flex size-16 items-center justify-center rounded-full bg-neutral-strong text-muted-foreground shadow-[var(--shadow-1)] transition-all duration-200 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
@@ -21,21 +21,15 @@ export function RegisterAppCard({ slotsLeft, locked = false }: { slotsLeft: numb
           <Button className="h-10 rounded-xl px-4 text-[13px] font-semibold" disabled>
             Needs developer access
           </Button>
-        ) : slotsLeft > 0 ? (
+        ) : (
           <Button asChild className="h-10 rounded-xl px-4 text-[13px] font-semibold shadow-[var(--shadow-1)]">
             <Link to="/apps/new">
               <PlusIcon />
               Setup App In 3 Minutes
             </Link>
           </Button>
-        ) : (
-          <Button className="h-10 rounded-xl px-4 text-[13px] font-semibold" disabled>
-            Quota reached
-          </Button>
         )}
-        <p className="text-xs text-muted-foreground tabular-nums">
-          {slotsLeft} slot{slotsLeft === 1 ? "" : "s"} remaining in Octo Corp Enterprise
-        </p>
+        <p className="text-xs text-muted-foreground">Apps are saved to your CipherOcto workspace.</p>
       </div>
     </article>
   )

@@ -20,7 +20,8 @@ export function exportAppsCsv(apps: PortfolioApp[], filename = "cipherocto-apps"
     "Crash-Free %",
     "Rating",
   ]
-  const escape = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
+  // Metrics the backend can't supply yet are null; they export as empty cells.
+  const escape = (v: string | number | null) => (v === null ? "" : `"${String(v).replace(/"/g, '""')}"`)
   const rows = apps.map((a) =>
     [
       a.name,

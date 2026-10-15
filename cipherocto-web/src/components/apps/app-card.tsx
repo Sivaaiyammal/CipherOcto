@@ -24,7 +24,7 @@ import {
   type PortfolioApp,
   type ReleaseStatus,
 } from "@/data/apps"
-import { formatCompact, formatSignedPercent, usd } from "@/lib/format"
+import { formatCompact, formatSignedPercent, NO_VALUE, orDash, usd } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 const INTEGRATION_TONES = [
@@ -54,6 +54,24 @@ const STATUS: Record<
     pill: "bg-mint-hover text-mint",
     dot: "bg-mint",
     title: "Staged rollout in progress",
+  },
+  development: {
+    label: () => "In Development",
+    pill: "bg-neutral-strong text-foreground/80",
+    dot: "bg-subtle-foreground",
+    title: "Not released yet",
+  },
+  maintenance: {
+    label: () => "Maintenance",
+    pill: "bg-blue-hover text-tertiary",
+    dot: "bg-tertiary",
+    title: "In maintenance mode",
+  },
+  archived: {
+    label: () => "Archived",
+    pill: "bg-neutral-strong text-foreground/80",
+    dot: "bg-subtle-foreground",
+    title: "Archived",
   },
 }
 
@@ -145,7 +163,7 @@ export function AppCard({
               {status.label(app.status)}
             </span>
             <span className="text-xs text-muted-foreground tabular-nums">
-              v{app.version} ({app.build})
+              {app.version ? `v${app.version}${app.build !== null ? ` (${app.build})` : ""}` : NO_VALUE}
             </span>
           </div>
         </header>
@@ -153,26 +171,31 @@ export function AppCard({
         <dl className="grid grid-cols-2 gap-x-3 gap-y-2.5 rounded-xl bg-background px-3 py-2.5 @[26rem]/card:grid-cols-4 @[26rem]/card:gap-2 @[26rem]/card:py-2">
           <Metric
             label="Monthly Rev"
-            value={usd.format(app.revenueMonthly)}
-            sub={formatSignedPercent(app.revenueGrowth)}
-            subClass={cn("font-semibold", app.revenueGrowth >= 0 ? "text-mint" : "text-destructive")}
+            value={orDash(app.revenueMonthly, usd.format)}
+            sub={orDash(app.revenueGrowth, formatSignedPercent)}
+            subClass={cn(
+              "font-semibold",
+              app.revenueGrowth === null ? undefined : app.revenueGrowth >= 0 ? "text-mint" : "text-destructive"
+            )}
           />
-          <Metric label="Active Base" value={formatCompact(app.mau)} sub="MAU" />
+          <Metric label="Active Base" value={orDash(app.mau, formatCompact)} sub="MAU" />
           <Metric
             label="Crash-Free"
-            value={`${app.crashFree.toFixed(2)}%`}
-            valueClass={app.crashFree >= 99.85 ? "text-mint" : app.crashFree < 99.6 ? "text-amber" : undefined}
-            sub={app.crashNote}
+            value={orDash(app.crashFree, (n) => `${n.toFixed(2)}%`)}
+            valueClass={
+              app.crashFree === null ? undefined : app.crashFree >= 99.85 ? "text-mint" : app.crashFree < 99.6 ? "text-amber" : undefined
+            }
+            sub={app.crashNote ?? "Not connected"}
           />
           <Metric
             label="Store Rating"
             value={
               <span className="inline-flex items-center gap-0.5">
-                {app.rating.toFixed(1)}
-                <StarIcon className="size-3 fill-foreground" />
+                {orDash(app.rating, (n) => n.toFixed(1))}
+                {app.rating !== null && <StarIcon className="size-3 fill-foreground" />}
               </span>
             }
-            sub={`${formatCompact(app.ratingCount)} rev`}
+            sub={app.ratingCount === null ? "Not connected" : `${formatCompact(app.ratingCount)} rev`}
           />
         </dl>
 
@@ -190,7 +213,7 @@ export function AppCard({
           ))}
           <span className="inline-flex items-center gap-1 rounded-md bg-foreground/[0.05] px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
             <span className="size-1.5 rounded-full bg-mint" />
-            {app.configFlags} Config Flags
+            {app.configFlags ?? NO_VALUE} Config Flags
           </span>
         </div>
       </div>
@@ -202,6 +225,8 @@ export function AppCard({
               <Button
                 size="sm"
                 onClick={() => onPromote(app)}
+                disabled
+                title="Releases module not connected yet"
                 className="h-8 rounded-lg bg-stream-mrr px-3 text-[13px] font-semibold text-white hover:bg-stream-mrr/90"
               >
                 Promote to {nextRolloutStep(app.status.rollout)}%

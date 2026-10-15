@@ -43,6 +43,7 @@ export const envSchema = {
     RTDN_SERVICE_ACCOUNT_EMAIL: { type: "string" },
     /** How often to re-verify stale purchases against Google. 0 disables the scheduler. */
     RECONCILE_INTERVAL_MINUTES: { type: "number", minimum: 0, default: 60 },
+    DNS_SERVERS: { type: "string" },
     SEED_ADMIN_EMAIL: { type: "string" },
     SEED_ADMIN_PASSWORD: { type: "string" },
     SEED_ADMIN_NAME: { type: "string", default: "Workspace Admin" },
@@ -69,6 +70,7 @@ export type RawEnv = {
   RTDN_AUDIENCE?: string
   RTDN_SERVICE_ACCOUNT_EMAIL?: string
   RECONCILE_INTERVAL_MINUTES: number
+  DNS_SERVERS?: string
   SEED_ADMIN_EMAIL?: string
   SEED_ADMIN_PASSWORD?: string
   SEED_ADMIN_NAME: string
@@ -96,6 +98,8 @@ export type Config = {
   /** Null until both values are set; the webhook then answers 503 instead of accepting pushes. */
   rtdn: { audience: string; serviceAccountEmail: string } | null
   reconcileIntervalMs: number
+  /** Overrides the OS resolver for SRV lookups (mongodb+srv). Empty = use the system DNS. */
+  dnsServers: string[]
   seedAdmin: { email: string; password: string; name: string } | null
 }
 
@@ -158,6 +162,7 @@ export function toConfig(e: RawEnv): Config {
         ? { audience: e.RTDN_AUDIENCE, serviceAccountEmail: e.RTDN_SERVICE_ACCOUNT_EMAIL }
         : null,
     reconcileIntervalMs: e.RECONCILE_INTERVAL_MINUTES * 60_000,
+    dnsServers: (e.DNS_SERVERS ?? "").split(",").map((s) => s.trim()).filter(Boolean),
     seedAdmin:
       e.SEED_ADMIN_EMAIL && e.SEED_ADMIN_PASSWORD
         ? { email: e.SEED_ADMIN_EMAIL.trim().toLowerCase(), password: e.SEED_ADMIN_PASSWORD, name: e.SEED_ADMIN_NAME }

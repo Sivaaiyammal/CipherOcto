@@ -14,16 +14,16 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { APP_QUOTA } from "@/data/apps"
 import { useApps } from "@/data/apps-context"
 
-// Placeholder until organizations come from the auth service.
-const org = { name: "Octo Corp Org", plan: "Enterprise Plan", initials: "CO" }
+// CipherOcto is one internal workspace for now (see SKILL.md §1); no org switching.
+const org = { name: "CipherOcto", plan: "Internal workspace", initials: "CO" }
 
 export function SidebarOrgFooter() {
   const { apps } = useApps()
-  const used = apps.length
-  const pct = Math.round((used / APP_QUOTA) * 100)
+  const total = apps.length
+  const live = apps.filter((a) => a.lifecycle === "production").length
+  const pct = total > 0 ? Math.round((live / total) * 100) : 0
 
   return (
     <div className="flex flex-col gap-3">
@@ -31,21 +31,21 @@ export function SidebarOrgFooter() {
         <div className="flex items-center justify-between text-xs text-sidebar-foreground/70">
           <span>Active Apps</span>
           <span className="font-bold text-white tabular-nums">
-            {used} / {APP_QUOTA}
+            {live} / {total}
           </span>
         </div>
         <div
           role="meter"
-          aria-label="Production app quota"
-          aria-valuenow={used}
+          aria-label="Apps in production"
+          aria-valuenow={live}
           aria-valuemin={0}
-          aria-valuemax={APP_QUOTA}
+          aria-valuemax={total}
           className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/15"
         >
           <div className="h-full rounded-full bg-mint-border" style={{ width: `${pct}%` }} />
         </div>
         <div className="mt-1.5 flex items-center justify-between text-[10px] text-sidebar-foreground/60">
-          <span>Production Quota</span>
+          <span>In Production</span>
           <span className="font-semibold text-mint-border tabular-nums">{pct}%</span>
         </div>
       </div>
@@ -85,7 +85,7 @@ export function SidebarOrgFooter() {
                   Organization settings
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem disabled>
                 <PlusIcon />
                 Create organization
               </DropdownMenuItem>

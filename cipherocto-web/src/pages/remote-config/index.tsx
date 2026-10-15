@@ -95,12 +95,12 @@ export default function RemoteConfigPage() {
   const draftIds = new Set(drafts.flatMap((d) => (d.after ? [d.after.id] : [])))
   const selected = filtered.find((p) => p.id === selectedId) ?? filtered[0] ?? null
 
-  const totalMau = apps.reduce((s, a) => s + a.mau, 0)
+  const totalMau = apps.reduce((s, a) => s + (a.mau ?? 0), 0)
   const mauFor = (p: RemoteParam | null) => {
     if (!p) return 0
     return apps
       .filter((a) => (p.apps.length === 0 || p.apps.includes(a.id)) && (scope === "all" || a.id === scope))
-      .reduce((s, a) => s + a.mau, 0)
+      .reduce((s, a) => s + (a.mau ?? 0), 0)
   }
 
   const updateWorking = (fn: (list: RemoteParam[]) => RemoteParam[]) => setWorking((w) => ({ ...w, [env]: fn(w[env]) }))

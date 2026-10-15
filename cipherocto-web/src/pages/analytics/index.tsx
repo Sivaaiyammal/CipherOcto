@@ -49,8 +49,8 @@ export default function AnalyticsPage() {
   const [compareOpen, setCompareOpen] = React.useState(false)
 
   const scopeApp = apps.find((a) => a.id === scope)
-  const totalMau = apps.reduce((s, a) => s + a.mau, 0)
-  const appShare = scopeApp && totalMau ? scopeApp.mau / totalMau : 1
+  const totalMau = apps.reduce((s, a) => s + (a.mau ?? 0), 0)
+  const appShare = scopeApp && totalMau ? (scopeApp.mau ?? 0) / totalMau : 1
   const factor = appShare * PLATFORM_SHARE[platform]
   const liveApps = scopeApp ? 1 : apps.length
 

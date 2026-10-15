@@ -8,9 +8,8 @@ import {
   UsersIcon,
 } from "lucide-react"
 
-import { getAppDetail } from "@/data/app-details"
-import { APP_QUOTA, type PortfolioApp } from "@/data/apps"
-import { formatCompact, formatCompactUsd } from "@/lib/format"
+import type { PortfolioApp } from "@/data/apps"
+import { formatCompact, formatCompactUsd, NO_VALUE, orDash } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 type Tone = "indigo" | "mint" | "stone" | "blue" | "pink"
@@ -126,30 +125,58 @@ function Stars({ rating }: { rating: number }) {
   )
 }
 
+/** Sum of the non-null values, or null when no app reports the metric. */
+function sumKnown(apps: PortfolioApp[], pick: (a: PortfolioApp) => number | null): number | null {
+  let total = 0
+  let any = false
+  for (const a of apps) {
+    const v = pick(a)
+    if (v !== null) {
+      total += v
+      any = true
+    }
+  }
+  return any ? total : null
+}
+
+/** Average of `value` weighted by `weight`, over apps that report both. */
+function weighted(
+  apps: PortfolioApp[],
+  value: (a: PortfolioApp) => number | null,
+  weight: (a: PortfolioApp) => number | null
+): number | null {
+  let num = 0
+  let den = 0
+  for (const a of apps) {
+    const v = value(a)
+    const w = weight(a)
+    if (v !== null && w !== null && w > 0) {
+      num += v * w
+      den += w
+    }
+  }
+  return den ? num / den : null
+}
+
 export function AppsSummary({ apps }: { apps: PortfolioApp[] }) {
   const totals = React.useMemo(() => {
-    const sum = (pick: (a: PortfolioApp) => number) =>
-      apps.reduce((acc, a) => acc + pick(a), 0)
-    const mau = sum((a) => a.mau)
-    const ratingCount = sum((a) => a.ratingCount)
-    const revenue = sum((a) => a.revenueMonthly)
-    const subscribers = sum((a) => a.subscribers)
+    const revenue = sumKnown(apps, (a) => a.revenueMonthly)
+    const subscribers = sumKnown(apps, (a) => a.subscribers)
     return {
       count: apps.length,
-      mau,
-      installs: sum((a) => a.installs30d),
+      inProduction: apps.filter((a) => a.status.kind === "live").length,
+      inDevelopment: apps.filter((a) => a.status.kind === "development").length,
+      mau: sumKnown(apps, (a) => a.mau),
+      installs: sumKnown(apps, (a) => a.installs30d),
       revenue,
-      mrr: sum((a) => getAppDetail(a).mrr),
-      arppu: subscribers ? revenue / subscribers : 0,
+      arppu: revenue !== null && subscribers ? revenue / subscribers : null,
       // Weighted so large apps dominate, as they do in practice
-      crashFree: mau ? sum((a) => a.crashFree * a.mau) / mau : 0,
-      rating: ratingCount ? sum((a) => a.rating * a.ratingCount) / ratingCount : 0,
-      ratingCount,
+      crashFree: weighted(apps, (a) => a.crashFree, (a) => a.mau),
+      rating: weighted(apps, (a) => a.rating, (a) => a.ratingCount),
+      ratingCount: sumKnown(apps, (a) => a.ratingCount),
       rollouts: apps.filter((a) => a.status.kind === "staged").length,
     }
   }, [apps])
-
-  const quotaUsed = Math.round((totals.count / APP_QUOTA) * 100)
 
   return (
     <section
@@ -158,57 +185,57 @@ export function AppsSummary({ apps }: { apps: PortfolioApp[] }) {
     >
       <SummaryTile
         title="Portfolio Fleet"
-        subtitle="Active instances"
+        subtitle="Registered apps"
         icon={<LayoutGridIcon />}
         tone="indigo"
         value={totals.count}
-        unit={`/ ${APP_QUOTA} Quota`}
-        pill={`${quotaUsed}% Used`}
-        caption={`${APP_QUOTA - totals.count} slots free`}
+        unit="apps"
+        pill={`${totals.inProduction} Live`}
+        caption={`${totals.inDevelopment} in development`}
       />
       <SummaryTile
         title="Global Audience"
         subtitle="30-day aggregated"
         icon={<UsersIcon />}
         tone="mint"
-        value={formatCompact(totals.mau)}
+        value={orDash(totals.mau, formatCompact)}
         unit={<span className="font-semibold text-mint">MAU</span>}
         pill={
           <>
             <TrendingUpIcon />
-            +14.2% MoM
+            {NO_VALUE} MoM
           </>
         }
-        caption={`${formatCompact(totals.installs)} installs`}
+        caption={`${orDash(totals.installs, formatCompact)} installs`}
       />
       <SummaryTile
         title="Gross Revenue"
         subtitle="Blended MRR + IAP"
         icon={<BanknoteIcon />}
         tone="stone"
-        value={formatCompactUsd(totals.revenue)}
+        value={orDash(totals.revenue, formatCompactUsd)}
         unit="/mo"
-        pill={`$${totals.arppu.toFixed(2)} ARPPU`}
-        caption={<span className="font-medium">MRR {formatCompactUsd(totals.mrr)}</span>}
+        pill={`${orDash(totals.arppu, (n) => `$${n.toFixed(2)}`)} ARPPU`}
+        caption={<span className="font-medium">MRR {NO_VALUE}</span>}
       />
       <SummaryTile
         title="Fleet Reliability"
         subtitle="Crash telemetry"
         icon={<ActivityIcon />}
         tone="blue"
-        value={`${totals.crashFree.toFixed(2)}%`}
+        value={orDash(totals.crashFree, (n) => `${n.toFixed(2)}%`)}
         pill={`${totals.rollouts} Rollout${totals.rollouts === 1 ? "" : "s"}`}
-        caption="0 outages"
+        caption={totals.crashFree === null ? "Not connected" : "Crash-free sessions"}
       />
       <SummaryTile
         title="Store Reputation"
-        subtitle={`${formatCompact(totals.ratingCount)} verified ratings`}
+        subtitle={`${orDash(totals.ratingCount, formatCompact)} verified ratings`}
         icon={<StarIcon className="fill-current" />}
         tone="pink"
-        value={totals.rating.toFixed(2)}
-        unit={<Stars rating={totals.rating} />}
-        pill="+0.12 QoQ"
-        caption="iOS & Android"
+        value={orDash(totals.rating, (n) => n.toFixed(2))}
+        unit={<Stars rating={totals.rating ?? 0} />}
+        pill={`${NO_VALUE} QoQ`}
+        caption="Google Play"
       />
     </section>
   )

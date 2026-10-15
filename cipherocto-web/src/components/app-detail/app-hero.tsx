@@ -1,8 +1,18 @@
 import { ShieldCheckIcon } from "lucide-react"
 
 import type { AppDetail } from "@/data/app-details"
-import { APP_TONE_TILE, type PortfolioApp } from "@/data/apps"
+import { APP_TONE_TILE, releaseStatusLabel, type PortfolioApp } from "@/data/apps"
+import { orDash } from "@/lib/format"
 import { cn } from "@/lib/utils"
+
+function timeAgo(iso: string | null) {
+  if (!iso) return "—"
+  const secs = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000))
+  if (secs < 60) return `${secs}s ago`
+  if (secs < 3600) return `${Math.round(secs / 60)}m ago`
+  if (secs < 86400) return `${Math.round(secs / 3600)}h ago`
+  return `${Math.round(secs / 86400)}d ago`
+}
 
 const CAPABILITY_TONE = {
   blue: "bg-blue-surface text-tertiary",
@@ -13,7 +23,7 @@ const CAPABILITY_TONE = {
 
 export function AppHero({ app, detail }: { app: PortfolioApp; detail: AppDetail }) {
   const Icon = app.icon
-  const androidShare = 100 - detail.iosShare
+  const androidShare = detail.iosShare === null ? null : 100 - detail.iosShare
   const platformLine =
     detail.iosShare === 100
       ? "App Store"
@@ -38,18 +48,20 @@ export function AppHero({ app, detail }: { app: PortfolioApp; detail: AppDetail 
             {app.name}
           </h1>
           <span className="rounded-full bg-neutral-strong px-2.5 py-0.5 text-xs font-semibold text-foreground/80 tabular-nums">
-            Build #{app.build} ({app.status.kind === "live" ? "Production" : "Pre-release"})
+            {app.build === null
+              ? releaseStatusLabel(app.status)
+              : `Build #${app.build} (${app.status.kind === "live" ? "Production" : "Pre-release"})`}
           </span>
         </div>
         <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-mint-hover px-2 py-0.5 text-[11px] font-bold text-mint tabular-nums">
           <ShieldCheckIcon className="size-3" />
-          {app.crashFree.toFixed(2)}% Crash-free SLA
+          {orDash(app.crashFree, (n) => `${n.toFixed(2)}%`)} Crash-free SLA
         </span>
         <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground">
           <span className="font-mono text-xs">{app.bundleId}</span>
           <span aria-hidden="true">•</span>
           <span>
-            App ID: <strong className="font-semibold text-foreground">{detail.appCode}</strong>
+            URL name: <strong className="font-semibold text-foreground">{detail.appCode}</strong>
           </span>
         </p>
         <p className="text-[13px] text-muted-foreground">{detail.categoryLong}</p>
@@ -68,25 +80,46 @@ export function AppHero({ app, detail }: { app: PortfolioApp; detail: AppDetail 
       <dl className="grid shrink-0 grid-cols-2 gap-4 rounded-xl bg-background p-4 text-xs @4xl/main:w-[26rem]">
         <div>
           <dt className="text-[11px] font-bold tracking-[0.04em] text-subtle-foreground uppercase">
-            Live Sandbox Webhooks
+            Play Notifications (RTDN)
           </dt>
-          <dd className="mt-1.5 flex items-center gap-1.5 font-semibold text-mint">
+          <dd
+            className={cn(
+              "mt-1.5 flex items-center gap-1.5 font-semibold",
+              detail.notificationsConfigured ? "text-mint" : "text-muted-foreground"
+            )}
+          >
             <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full rounded-full bg-mint opacity-60 motion-safe:animate-ping" />
-              <span className="relative inline-flex size-2 rounded-full bg-mint" />
+              {detail.notificationsConfigured && (
+                <span className="absolute inline-flex size-full rounded-full bg-mint opacity-60 motion-safe:animate-ping" />
+              )}
+              <span
+                className={cn(
+                  "relative inline-flex size-2 rounded-full",
+                  detail.notificationsConfigured ? "bg-mint" : "bg-subtle-foreground"
+                )}
+              />
             </span>
-            Connected ({detail.webhookLatency}s avg)
+            {detail.notificationsConfigured === null
+              ? "—"
+              : detail.notificationsConfigured
+                ? "Configured"
+                : "Not configured"}
           </dd>
-          <dd className="mt-0.5 text-muted-foreground">Last handshake: {detail.lastHandshake}</dd>
+          <dd className="mt-0.5 text-muted-foreground">Last verified: {timeAgo(detail.lastVerifiedAt)}</dd>
         </div>
         <div>
           <dt className="text-[11px] font-bold tracking-[0.04em] text-subtle-foreground uppercase">
             Primary Platform
           </dt>
           <dd className="mt-1.5 font-semibold text-foreground tabular-nums">
-            {detail.iosShare > 0 && `iOS ${detail.iosShare}%`}
-            {detail.iosShare > 0 && androidShare > 0 && " / "}
-            {androidShare > 0 && `Android ${androidShare}%`}
+            {detail.iosShare === null || androidShare === null
+              ? detail.platformNames.join(" / ") || "—"
+              : [
+                  detail.iosShare > 0 ? `iOS ${detail.iosShare}%` : null,
+                  androidShare > 0 ? `Android ${androidShare}%` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" / ")}
           </dd>
           <dd className="mt-0.5 text-muted-foreground">{platformLine}</dd>
         </div>

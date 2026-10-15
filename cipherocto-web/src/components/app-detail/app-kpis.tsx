@@ -18,6 +18,8 @@ import {
   formatCompactUsd,
   formatSignedPercent,
   integer,
+  NO_VALUE,
+  orDash,
 } from "@/lib/format"
 
 function Stars({ rating }: { rating: number }) {
@@ -34,9 +36,19 @@ function Stars({ rating }: { rating: number }) {
 }
 
 export function AppKpis({ app, detail }: { app: PortfolioApp; detail: AppDetail }) {
-  const [dollars, cents] = app.revenueMonthly.toFixed(2).split(".")
+  const [dollars, cents] = (app.revenueMonthly ?? 0).toFixed(2).split(".")
   const slaLabel =
-    app.crashFree >= 99.8 ? "SLA Exceeded" : app.crashFree >= 99.6 ? "SLA Met" : "Below SLA"
+    app.crashFree === null
+      ? NO_VALUE
+      : app.crashFree >= 99.8
+        ? "SLA Exceeded"
+        : app.crashFree >= 99.6
+          ? "SLA Met"
+          : "Below SLA"
+  // A sparkline needs at least two points; otherwise the card shows its aside text.
+  const spark = (points: number[]) => (points.length > 1 ? points : undefined)
+  const usdOrDash = (n: number | null) => orDash(n, formatCompactUsd)
+  const NOT_CONNECTED = "Not connected"
 
   return (
     <section
@@ -48,46 +60,59 @@ export function AppKpis({ app, detail }: { app: PortfolioApp; detail: AppDetail 
         icon={<BanknoteIcon />}
         tone="mint"
         value={
-          <>
-            ${Number(dollars).toLocaleString("en-US")}
-            <span className="text-lg font-normal text-muted-foreground">.{cents}</span>
-          </>
+          app.revenueMonthly === null ? (
+            NO_VALUE
+          ) : (
+            <>
+              ${Number(dollars).toLocaleString("en-US")}
+              <span className="text-lg font-normal text-muted-foreground">.{cents}</span>
+            </>
+          )
         }
-        delta={{ label: `${formatSignedPercent(app.revenueGrowth)} MoM`, icon: <TrendingUpIcon /> }}
-        trend={detail.trends.revenue}
+        delta={{
+          label: app.revenueGrowth === null ? NO_VALUE : `${formatSignedPercent(app.revenueGrowth)} MoM`,
+          icon: <TrendingUpIcon />,
+        }}
+        trend={spark(detail.trends.revenue)}
+        aside={NOT_CONNECTED}
         breakdown={[
-          { label: "MRR", value: formatCompactUsd(detail.mrr) },
-          { label: "IAP", value: formatCompactUsd(detail.iap) },
-          { label: "ARPPU", value: `$${detail.arppu.toFixed(2)}` },
+          { label: "MRR", value: usdOrDash(detail.mrr) },
+          { label: "IAP", value: usdOrDash(detail.iap) },
+          { label: "ARPPU", value: orDash(detail.arppu, (n) => `$${n.toFixed(2)}`) },
         ]}
       />
       <KpiCardCompact
         title="Active Audience"
         icon={<UsersIcon />}
         tone="blue"
-        value={formatCompact(app.mau)}
+        value={orDash(app.mau, formatCompact)}
         unit="MAU"
-        delta={{ label: app.mau ? "+12.1%" : "New", icon: <TrendingUpIcon /> }}
-        trend={detail.trends.audience}
+        delta={{ label: NO_VALUE, icon: <TrendingUpIcon /> }}
+        trend={spark(detail.trends.audience)}
+        aside={NOT_CONNECTED}
         breakdown={[
-          { label: "DAU", value: formatCompact(detail.dau) },
-          { label: "Ratio", value: `${(detail.stickiness * 100).toFixed(1)}%` },
-          { label: "Subs", value: formatCompact(app.subscribers) },
+          { label: "DAU", value: orDash(detail.dau, formatCompact) },
+          { label: "Ratio", value: orDash(detail.stickiness, (n) => `${(n * 100).toFixed(1)}%`) },
+          { label: "Subs", value: orDash(app.subscribers, formatCompact) },
         ]}
       />
       <KpiCardCompact
         title="Stability & Health"
         icon={<ShieldCheckIcon />}
         tone="lavender"
-        value={`${app.crashFree.toFixed(2)}%`}
+        value={orDash(app.crashFree, (n) => `${n.toFixed(2)}%`)}
         delta={{ label: slaLabel, icon: <BadgeCheckIcon /> }}
-        trend={detail.trends.stability}
+        trend={spark(detail.trends.stability)}
+        aside={NOT_CONNECTED}
         breakdown={[
           {
             label: "Crashes",
-            value: `${formatCompact(detail.crashes)} / ${formatCompact(detail.sessions)}`,
+            value:
+              detail.crashes === null || detail.sessions === null
+                ? NO_VALUE
+                : `${formatCompact(detail.crashes)} / ${formatCompact(detail.sessions)}`,
           },
-          { label: "ANR", value: `${detail.anrRate.toFixed(2)}%` },
+          { label: "ANR", value: orDash(detail.anrRate, (n) => `${n.toFixed(2)}%`) },
         ]}
       />
       <KpiCardCompact
@@ -95,17 +120,27 @@ export function AppKpis({ app, detail }: { app: PortfolioApp; detail: AppDetail 
         icon={<StarIcon />}
         tone="amber"
         value={
-          <>
-            {app.rating.toFixed(2)}
-            <Stars rating={app.rating} />
-          </>
+          app.rating === null ? (
+            NO_VALUE
+          ) : (
+            <>
+              {app.rating.toFixed(2)}
+              <Stars rating={app.rating} />
+            </>
+          )
         }
-        delta={{ label: `${formatCompact(app.ratingCount)} Reviews`, icon: <ThumbsUpIcon /> }}
-        aside={`+${detail.ratingDelta.toFixed(2)} QoQ`}
+        delta={{
+          label: app.ratingCount === null ? NO_VALUE : `${formatCompact(app.ratingCount)} Reviews`,
+          icon: <ThumbsUpIcon />,
+        }}
+        aside={detail.ratingDelta === null ? NOT_CONNECTED : `+${detail.ratingDelta.toFixed(2)} QoQ`}
         breakdown={[
           ...(detail.iosRating !== null ? [{ label: "iOS", value: `${detail.iosRating.toFixed(2)} ★` }] : []),
           ...(detail.androidRating !== null
             ? [{ label: "Android", value: `${detail.androidRating.toFixed(2)} ★` }]
+            : []),
+          ...(detail.iosRating === null && detail.androidRating === null
+            ? [{ label: "Play Store", value: NO_VALUE }]
             : []),
         ]}
       />
@@ -113,12 +148,15 @@ export function AppKpis({ app, detail }: { app: PortfolioApp; detail: AppDetail 
         title="Paywall Conversion"
         icon={<CreditCardIcon />}
         tone="pink"
-        value={`${detail.paywallConversion.toFixed(1)}%`}
-        delta={{ label: `+${detail.paywallUplift.toFixed(1)}% uplift`, icon: <ArrowUpRightIcon /> }}
-        aside={`Variant ${detail.paywallVariant}`}
+        value={orDash(detail.paywallConversion, (n) => `${n.toFixed(1)}%`)}
+        delta={{
+          label: detail.paywallUplift === null ? NO_VALUE : `+${detail.paywallUplift.toFixed(1)}% uplift`,
+          icon: <ArrowUpRightIcon />,
+        }}
+        aside={detail.paywallVariant === null ? NOT_CONNECTED : `Variant ${detail.paywallVariant}`}
         breakdown={[
-          { label: "Weekly Trials", value: integer.format(detail.weeklyTrials) },
-          { label: "Paid", value: `${detail.trialToPaid}%` },
+          { label: "Weekly Trials", value: orDash(detail.weeklyTrials, (n) => integer.format(n)) },
+          { label: "Paid", value: orDash(detail.trialToPaid, (n) => `${n}%`) },
         ]}
       />
     </section>

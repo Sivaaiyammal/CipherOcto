@@ -1,10 +1,13 @@
 import { FlaskConicalIcon, RocketIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { NO_VALUE } from "@/lib/format"
 
+// Experiments need the remote-config service and revenue data, neither connected
+// yet, so there is no recommended target or projected uplift to show.
 export function AbExperimentCard({
-  target = "FocusPulse Pro iOS",
-  projectedUplift = "+$14,200/mo",
+  target = NO_VALUE,
+  projectedUplift = NO_VALUE,
 }: {
   target?: string
   projectedUplift?: string
@@ -34,7 +37,11 @@ export function AbExperimentCard({
         </dd>
       </dl>
 
-      <Button className="mt-auto h-12 rounded-xl text-sm font-semibold">
+      <Button
+        className="mt-auto h-12 rounded-xl text-sm font-semibold"
+        disabled
+        title="Remote config isn't connected yet"
+      >
         <RocketIcon className="text-mint-border" />
         Launch Remote A/B Test
       </Button>

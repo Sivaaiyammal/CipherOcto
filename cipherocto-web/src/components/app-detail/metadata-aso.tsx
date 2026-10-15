@@ -25,6 +25,11 @@ export function MetadataAso({ aso }: { aso: AsoInsights }) {
           Top Storefront Keyword Ranks
         </p>
         <ul className="mt-2 flex flex-col gap-1.5 text-[13px]">
+          {aso.keywords.length === 0 && (
+            <li className="text-xs text-muted-foreground">
+              Keyword ranks appear once a Play listing integration is connected.
+            </li>
+          )}
           {aso.keywords.map((k) => (
             <li key={k.term} className="flex items-center justify-between gap-2">
               <span className="truncate text-foreground">“{k.term}”</span>
@@ -47,7 +52,9 @@ export function MetadataAso({ aso }: { aso: AsoInsights }) {
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground">Storefront Localization Coverage</span>
           <span className="font-bold text-foreground tabular-nums">
-            {Math.round((aso.localized / aso.locales.length) * 100)}% ({aso.localized} / {aso.locales.length} complete)
+            {aso.locales.length === 0
+              ? "—"
+              : `${Math.round((aso.localized / aso.locales.length) * 100)}% (${aso.localized} / ${aso.locales.length} complete)`}
           </span>
         </div>
         <ul className="flex flex-wrap gap-1">

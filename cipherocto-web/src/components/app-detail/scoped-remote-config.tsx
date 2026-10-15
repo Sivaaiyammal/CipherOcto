@@ -8,7 +8,7 @@ import { getScopedFlags } from "@/data/app-details"
 import type { PortfolioApp } from "@/data/apps"
 
 export function ScopedRemoteConfig({ app }: { app: PortfolioApp }) {
-  const flags = React.useMemo(() => getScopedFlags(app), [app])
+  const flags = React.useMemo(() => getScopedFlags(), [])
   const [enabled, setEnabled] = React.useState<Record<string, boolean>>(() =>
     Object.fromEntries(flags.map((f) => [f.key, f.enabled]))
   )
@@ -29,11 +29,16 @@ export function ScopedRemoteConfig({ app }: { app: PortfolioApp }) {
           to={`/remote-config?app=${app.id}`}
           className="shrink-0 text-xs font-semibold text-mint hover:underline"
         >
-          All {app.configFlags} Flags →
+          {app.configFlags === null ? "All Flags" : `All ${app.configFlags} Flags`} →
         </Link>
       </header>
 
       <ul className="flex flex-col gap-2.5">
+        {flags.length === 0 && (
+          <li className="rounded-xl bg-background p-3 text-xs text-muted-foreground">
+            No flags yet. Remote config isn&apos;t connected to a backend module.
+          </li>
+        )}
         {flags.map((flag) => {
           const id = `${app.id}-${flag.key}`
           return (

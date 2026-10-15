@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Link } from "react-router-dom"
 import { SlidersHorizontalIcon } from "lucide-react"
 
 import { Switch } from "@/components/ui/switch"
@@ -27,15 +28,20 @@ export function QuickRemoteFlags() {
           <SlidersHorizontalIcon className="size-4 text-muted-foreground" />
           Quick Remote Flags
         </h2>
-        <a
-          href="#"
+        <Link
+          to="/remote-config"
           className="shrink-0 text-xs font-semibold text-muted-foreground hover:text-foreground"
         >
           Manage All ({TOTAL_FLAGS})
-        </a>
+        </Link>
       </header>
 
       <ul className="flex flex-col gap-2.5">
+        {QUICK_FLAGS.length === 0 && (
+          <li className="rounded-xl bg-background p-3 text-xs text-muted-foreground">
+            Remote config isn&apos;t connected yet. Flags you publish will show up here.
+          </li>
+        )}
         {QUICK_FLAGS.map((flag) => {
           const id = `flag-${flag.key}`
           return (

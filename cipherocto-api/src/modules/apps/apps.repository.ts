@@ -14,6 +14,7 @@ export type AppRecord = {
   platform: "android"
   status: AppStatus
   owner: string
+  category: string
   techStack: string
   playConsoleUrl: string
   createdAt: string
@@ -39,6 +40,7 @@ type AppLean = {
   platform: "android"
   status: AppStatus
   owner?: string
+  category?: string
   techStack?: string
   playConsoleUrl?: string
   createdAt: Date
@@ -63,6 +65,7 @@ const toApp = (a: AppLean): AppRecord => ({
   platform: a.platform,
   status: a.status,
   owner: a.owner ?? "",
+  category: a.category ?? "",
   techStack: a.techStack ?? "",
   playConsoleUrl: a.playConsoleUrl ?? "",
   createdAt: a.createdAt.toISOString(),
@@ -119,6 +122,7 @@ export class AppsRepository {
     slug: string
     status: AppStatus
     owner: string
+    category: string
     techStack: string
     playConsoleUrl: string
   }) {
@@ -130,7 +134,7 @@ export class AppsRepository {
     }
   }
 
-  async update(id: string, patch: Partial<Pick<AppRecord, "name" | "slug" | "status" | "owner" | "techStack" | "playConsoleUrl">>) {
+  async update(id: string, patch: Partial<Pick<AppRecord, "name" | "slug" | "status" | "owner" | "category" | "techStack" | "playConsoleUrl">>) {
     const set = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined))
     if (!Object.keys(set).length) return
     try {

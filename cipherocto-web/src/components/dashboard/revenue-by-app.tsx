@@ -4,16 +4,21 @@ import { Cell, Pie, PieChart } from "recharts"
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart"
 import {
   formatCompactUsd,
-  REVENUE_BY_APP,
+  revenueByApp,
   usd,
 } from "@/components/dashboard/revenue-data"
-
-const chartConfig = Object.fromEntries(
-  REVENUE_BY_APP.map((a) => [a.app, { label: a.app, color: a.color }])
-) satisfies ChartConfig
+import { useApps } from "@/data/apps-context"
+import { NO_VALUE } from "@/lib/format"
 
 export function RevenueByApp() {
-  const total = REVENUE_BY_APP.reduce((sum, a) => sum + a.value, 0)
+  const { apps } = useApps()
+  const items = React.useMemo(() => revenueByApp(apps), [apps])
+  const chartConfig = React.useMemo(
+    () => Object.fromEntries(items.map((a) => [a.app, { label: a.app, color: a.color }])) satisfies ChartConfig,
+    [items]
+  )
+
+  const total = items.reduce((sum, a) => sum + a.value, 0)
   const [period] = React.useState(() =>
     new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" })
   )
@@ -32,35 +37,56 @@ export function RevenueByApp() {
       <div className="relative mx-auto size-44">
         <ChartContainer config={chartConfig} className="aspect-square size-44">
           <PieChart>
-            <Pie
-              data={REVENUE_BY_APP}
-              dataKey="value"
-              nameKey="app"
-              innerRadius={56}
-              outerRadius={78}
-              paddingAngle={2}
-              cornerRadius={3}
-              startAngle={90}
-              endAngle={-270}
-              stroke="none"
-              isAnimationActive={false}
-            >
-              {REVENUE_BY_APP.map((a) => (
-                <Cell key={a.app} fill={a.color} />
-              ))}
-            </Pie>
+            {items.length > 0 ? (
+              <Pie
+                data={items}
+                dataKey="value"
+                nameKey="app"
+                innerRadius={56}
+                outerRadius={78}
+                paddingAngle={2}
+                cornerRadius={3}
+                startAngle={90}
+                endAngle={-270}
+                stroke="none"
+                isAnimationActive={false}
+              >
+                {items.map((a) => (
+                  <Cell key={a.app} fill={a.color} />
+                ))}
+              </Pie>
+            ) : (
+              // Empty ring so the card keeps its shape until revenue is imported.
+              <Pie
+                data={[{ name: "none", value: 1 }]}
+                dataKey="value"
+                innerRadius={56}
+                outerRadius={78}
+                startAngle={90}
+                endAngle={-270}
+                stroke="none"
+                isAnimationActive={false}
+              >
+                <Cell fill="var(--neutral-strong)" />
+              </Pie>
+            )}
           </PieChart>
         </ChartContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-[13px] text-muted-foreground">Total</span>
           <span className="text-xl font-bold tracking-[-0.02em] text-foreground tabular-nums">
-            {formatCompactUsd(total)}
+            {items.length > 0 ? formatCompactUsd(total) : NO_VALUE}
           </span>
         </div>
       </div>
 
       <ul className="flex flex-col gap-2.5 text-[13px]">
-        {REVENUE_BY_APP.map((a) => (
+        {items.length === 0 && (
+          <li className="text-center text-muted-foreground">
+            No revenue imported yet. Connect Google Play to see it by app.
+          </li>
+        )}
+        {items.map((a) => (
           <li key={a.app} className="flex items-center gap-2.5">
             <span
               className="size-2.5 shrink-0 rounded-full"
@@ -71,7 +97,7 @@ export function RevenueByApp() {
             </span>
             <span className="tabular-nums">
               <strong className="font-bold text-foreground">
-                {Math.round((a.value / total) * 100)}%
+                {total > 0 ? Math.round((a.value / total) * 100) : 0}%
               </strong>{" "}
               <span className="text-muted-foreground">({usd.format(a.value)})</span>
             </span>
