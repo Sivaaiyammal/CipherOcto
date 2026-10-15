@@ -40,7 +40,8 @@ import {
   type ParamCategory,
   type RemoteParam,
 } from "@/data/remote-config"
-import { currentUser } from "@/lib/current-user"
+import { useAuth } from "@/data/auth-context"
+import { useCurrentUser } from "@/lib/use-current-user"
 import { cn } from "@/lib/utils"
 
 const nowIso = () => new Date().toISOString()
@@ -56,6 +57,9 @@ const chipBase = "h-9 shrink-0 rounded-full px-3.5 text-[11px] font-bold trackin
 const utilBtn = "flex h-9 items-center gap-1.5 rounded-lg bg-foreground/[0.04] px-3 text-[11px] font-bold tracking-[0.04em] text-foreground transition-colors hover:bg-foreground/[0.08]"
 
 export default function RemoteConfigPage() {
+  const currentUser = useCurrentUser()
+  const { can } = useAuth()
+  const canPublish = can("config:publish")
   const { apps } = useApps()
   const [searchParams] = useSearchParams()
   const initialApp = searchParams.get("app")
@@ -203,7 +207,8 @@ export default function RemoteConfigPage() {
           </button>
           <button
             type="button"
-            disabled={!drafts.length}
+            disabled={!drafts.length || !canPublish}
+            title={canPublish ? undefined : "Your role can't publish configuration."}
             onClick={publish}
             className="flex h-10 items-center gap-2 rounded-xl bg-mint-border px-4 text-[13px] font-semibold text-mint shadow-[var(--shadow-1)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -213,8 +218,8 @@ export default function RemoteConfigPage() {
           </button>
           <button
             type="button"
-            onClick={() => setEditor((e) => ({ open: true, param: null, key: e.key + 1 }))}
-            className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-[var(--shadow-1)] hover:bg-primary/90"
+            disabled={!canPublish} onClick={() => setEditor((e) => ({ open: true, param: null, key: e.key + 1 }))}
+            className="disabled:cursor-not-allowed disabled:opacity-40 flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-[var(--shadow-1)] hover:bg-primary/90"
           >
             <PlusIcon className="size-4" />
             New Parameter

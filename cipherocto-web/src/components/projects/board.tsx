@@ -26,7 +26,9 @@ export function Board({
   onOpen,
   onAdd,
   onMove,
+  readOnly = false,
 }: {
+  readOnly?: boolean
   tasks: Task[]
   grouping: Grouping
   compact: boolean
@@ -47,7 +49,7 @@ export function Board({
             key={status}
             aria-label={meta.label}
             onDragOver={(e) => {
-              if (!dragId) return
+              if (!dragId || readOnly) return
               e.preventDefault()
               e.dataTransfer.dropEffect = "move"
               setOver(status)
@@ -76,8 +78,8 @@ export function Board({
               <button
                 type="button"
                 aria-label={`Add task to ${meta.label}`}
-                onClick={() => onAdd(status)}
-                className="rounded-lg p-1 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
+                disabled={readOnly} onClick={() => onAdd(status)}
+                className="disabled:cursor-not-allowed disabled:opacity-40 rounded-lg p-1 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
               >
                 <PlusIcon className="size-[18px]" />
               </button>
@@ -92,6 +94,7 @@ export function Board({
                       key={t.id}
                       task={t}
                       compact={compact}
+                      readOnly={readOnly}
                       dragging={dragId === t.id}
                       onOpen={onOpen}
                       onAdvance={(task) => onMove(task.id, STATUS_ORDER[STATUS_ORDER.indexOf(task.status) + 1])}
@@ -107,8 +110,8 @@ export function Board({
               {col.length === 0 && <p className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">Nothing here — drop a card or add one.</p>}
               <button
                 type="button"
-                onClick={() => onAdd(status)}
-                className="flex w-full items-center justify-center gap-1 rounded-xl bg-foreground/[0.045] py-2 text-[11px] font-bold tracking-[0.04em] text-muted-foreground hover:bg-foreground/[0.08] hover:text-foreground"
+                disabled={readOnly} onClick={() => onAdd(status)}
+                className="disabled:cursor-not-allowed disabled:opacity-40 flex w-full items-center justify-center gap-1 rounded-xl bg-foreground/[0.045] py-2 text-[11px] font-bold tracking-[0.04em] text-muted-foreground hover:bg-foreground/[0.08] hover:text-foreground"
               >
                 <PlusIcon className="size-4" /> Add Card
               </button>

@@ -53,7 +53,9 @@ export function ProductTable({
   apps,
   onEdit,
   onPriceTest,
+  readOnly = false,
 }: {
+  readOnly?: boolean
   products: Product[]
   apps: PortfolioApp[]
   onEdit: (p: Product) => void
@@ -222,10 +224,10 @@ export function ProductTable({
                   </td>
                   <td className="px-4 py-3.5 text-right">
                     <div className="inline-flex items-center gap-1">
-                      <button type="button" onClick={() => onPriceTest(p)} title="A/B Test Price" aria-label={`A/B test price for ${p.name}`} className="rounded-md p-1.5 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground">
+                      <button type="button" disabled={readOnly} onClick={() => onPriceTest(p)} title="A/B Test Price" aria-label={`A/B test price for ${p.name}`} className="disabled:cursor-not-allowed disabled:opacity-40 rounded-md p-1.5 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground">
                         <ScaleIcon className="size-4" />
                       </button>
-                      <button type="button" onClick={() => onEdit(p)} title="Edit SKU" aria-label={`Edit ${p.name}`} className="rounded-md p-1.5 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground">
+                      <button type="button" disabled={readOnly} onClick={() => onEdit(p)} title="Edit SKU" aria-label={`Edit ${p.name}`} className="disabled:cursor-not-allowed disabled:opacity-40 rounded-md p-1.5 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground">
                         <SlidersHorizontalIcon className="size-4" />
                       </button>
                     </div>

@@ -1,3 +1,4 @@
+import type { Permission } from "@/lib/permissions"
 import {
   BanknoteIcon,
   ChartSplineIcon,
@@ -21,31 +22,35 @@ export type NavItem = {
   group?: string
   /** Page name in the breadcrumb when it differs from the menu label */
   pageTitle?: string
+  /** Needed to see this item and open the page */
+  permission: Permission
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboardIcon },
+  { title: "Dashboard", url: "/", icon: LayoutDashboardIcon, permission: "dashboard:read" },
   {
     title: "Apps",
     url: "/apps",
     icon: GripIcon,
     group: "Platform",
     pageTitle: "Apps & Portfolio",
+    permission: "apps:read",
   },
   {
     title: "Remote Configuration",
     url: "/remote-config",
     icon: SlidersHorizontalIcon,
     group: "Platform",
+    permission: "config:read",
   },
-  { title: "Subscriptions", url: "/subscriptions", icon: TagIcon, group: "Platform", pageTitle: "Subscriptions & In-App Purchases" },
-  { title: "Revenue & Finance", url: "/finance", icon: BanknoteIcon, group: "Business", pageTitle: "Revenue & Finance" },
-  { title: "Analytics", url: "/analytics", icon: ChartSplineIcon, group: "Business", pageTitle: "Analytics & Product Intelligence" },
-  { title: "Projects & Tasks", url: "/projects", icon: ListChecksIcon, group: "Workspace", pageTitle: "Projects & Tasks" },
-  { title: "Team Management", url: "/team", icon: UsersIcon, group: "Workspace", pageTitle: "Team Management & Access Control" },
-  { title: "Releases", url: "/releases", icon: RocketIcon, group: "Platform", pageTitle: "Releases & Deployments" },
-  { title: "Integrations", url: "/integrations", icon: NetworkIcon, group: "Platform", pageTitle: "Integrations & API Hub" },
-  { title: "Settings", url: "/settings", icon: SettingsIcon, group: "Workspace" },
+  { title: "Subscriptions", url: "/subscriptions", icon: TagIcon, group: "Platform", pageTitle: "Subscriptions & In-App Purchases", permission: "subscriptions:read" },
+  { title: "Revenue & Finance", url: "/finance", icon: BanknoteIcon, group: "Business", pageTitle: "Revenue & Finance", permission: "finance:read" },
+  { title: "Analytics", url: "/analytics", icon: ChartSplineIcon, group: "Business", pageTitle: "Analytics & Product Intelligence", permission: "analytics:read" },
+  { title: "Projects & Tasks", url: "/projects", icon: ListChecksIcon, group: "Workspace", pageTitle: "Projects & Tasks", permission: "projects:read" },
+  { title: "Team Management", url: "/team", icon: UsersIcon, group: "Workspace", pageTitle: "Team Management & Access Control", permission: "team:read" },
+  { title: "Releases", url: "/releases", icon: RocketIcon, group: "Platform", pageTitle: "Releases & Deployments", permission: "releases:read" },
+  { title: "Integrations", url: "/integrations", icon: NetworkIcon, group: "Platform", pageTitle: "Integrations & API Hub", permission: "integrations:read" },
+  { title: "Settings", url: "/settings", icon: SettingsIcon, group: "Workspace", permission: "settings:manage" },
 ]
 
 export function isNavItemActive(item: NavItem, pathname: string) {

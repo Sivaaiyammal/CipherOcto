@@ -14,7 +14,9 @@ const TONE = {
 export function PaywallVariants({
   variants,
   onPromote,
+  readOnly = false,
 }: {
+  readOnly?: boolean
   variants: PaywallVariant[]
   onPromote: (v: PaywallVariant) => void
 }) {
@@ -98,7 +100,7 @@ export function PaywallVariants({
                 <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-1 text-xs text-muted-foreground">
                   <span>{trigger ? v.placement : `Placement: ${v.placement}`}</span>
                   {v.winner && !leading ? (
-                    <button type="button" onClick={() => onPromote(v)} className="font-semibold whitespace-nowrap text-mint hover:underline">
+                    <button type="button" disabled={readOnly} onClick={() => onPromote(v)} className="disabled:cursor-not-allowed disabled:opacity-40 font-semibold whitespace-nowrap text-mint hover:underline">
                       Promote to 100% →
                     </button>
                   ) : (

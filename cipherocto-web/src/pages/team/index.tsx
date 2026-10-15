@@ -6,8 +6,9 @@ import { AuditStream, RbacTiers } from "@/components/team/lower-panels"
 import { Roster } from "@/components/team/roster"
 import { AuditPanel, InvitesPanel, PermissionMatrix, ServicesPanel } from "@/components/team/tab-panels"
 import { TeamKpis } from "@/components/team/team-kpis"
+import { useAuth } from "@/data/auth-context"
 import { APP_SCOPES, ROLES, roleOf, SEED_AUDIT, SEED_INVITES, SEED_MEMBERS, SEED_SERVICES, ageLabel, type AppScopeId, type AuditEvent, type AuditKind, type Invite, type Member, type RoleId, type ServiceAccount } from "@/data/team"
-import { currentUser } from "@/lib/current-user"
+import { useCurrentUser } from "@/lib/use-current-user"
 import { downloadFile, toCsv } from "@/lib/download"
 import { cn } from "@/lib/utils"
 
@@ -17,6 +18,9 @@ const selectClass =
   "h-10 appearance-none rounded-lg bg-card pr-8 pl-3 text-[13px] font-semibold text-foreground shadow-[var(--shadow-1)] outline-none focus:ring-2 focus:ring-ring/20"
 
 export default function TeamPage() {
+  const currentUser = useCurrentUser()
+  const { can } = useAuth()
+  const canManage = can("team:manage")
   const [members, setMembers] = React.useState<Member[]>(SEED_MEMBERS)
   const [invites, setInvites] = React.useState<Invite[]>(SEED_INVITES)
   const [services, setServices] = React.useState<ServiceAccount[]>(SEED_SERVICES)
@@ -86,8 +90,8 @@ export default function TeamPage() {
           </button>
           <button
             type="button"
-            onClick={() => setInviteOpen(true)}
-            className="flex h-10 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground shadow-[var(--shadow-1)] hover:bg-primary/90"
+            disabled={!canManage} onClick={() => setInviteOpen(true)}
+            className="disabled:cursor-not-allowed disabled:opacity-40 flex h-10 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-primary-foreground shadow-[var(--shadow-1)] hover:bg-primary/90"
           >
             <UserPlusIcon className="size-[18px]" />
             Invite Team Member
@@ -177,6 +181,7 @@ export default function TeamPage() {
       <div className="px-4 lg:px-6" role="tabpanel">
         {tab === "members" && (
           <Roster
+            readOnly={!canManage}
             key={`${roleFilter}-${scopeFilter}-${q}`}
             members={filtered}
             total={members.length}
@@ -193,6 +198,7 @@ export default function TeamPage() {
         )}
         {tab === "invites" && (
           <InvitesPanel
+            readOnly={!canManage}
             invites={invites}
             onResend={(i) => log({ action: "re-sent invitation to", target: i.email, meta: "Link valid for 7 days", kind: "access" })}
             onRevoke={(i) => {
@@ -204,6 +210,7 @@ export default function TeamPage() {
         {tab === "roles" && <PermissionMatrix />}
         {tab === "services" && (
           <ServicesPanel
+            readOnly={!canManage}
             services={services}
             onRotate={(s) => {
               setServices((list) => list.map((x) => (x.id === s.id ? { ...x, status: "active" as const, expiresDays: 365, lastUsedMin: 0 } : x)))

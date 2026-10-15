@@ -91,7 +91,9 @@ export function ReleaseTable({
   onLogs,
   onAdvance,
   onSubmit,
+  readOnly = false,
 }: {
+  readOnly?: boolean
   releases: Release[]
   onInspect: (r: Release) => void
   onLogs: (r: Release) => void
@@ -269,9 +271,9 @@ export function ReleaseTable({
                           <DropdownMenuItem onSelect={() => onInspect(r)}>Inspect build</DropdownMenuItem>
                           <DropdownMenuItem onSelect={() => onLogs(r)}>View logs</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          {r.status === "draft" && <DropdownMenuItem onSelect={() => onSubmit(r)}>Submit for store review</DropdownMenuItem>}
-                          {r.status === "review" && <DropdownMenuItem onSelect={() => onAdvance(r)}>Mark approved &amp; start rollout</DropdownMenuItem>}
-                          {(r.status === "rollout" || r.status === "canary") && <DropdownMenuItem onSelect={() => onAdvance(r)}>Promote to next stage</DropdownMenuItem>}
+                          {!readOnly && r.status === "draft" && <DropdownMenuItem onSelect={() => onSubmit(r)}>Submit for store review</DropdownMenuItem>}
+                          {!readOnly && r.status === "review" && <DropdownMenuItem onSelect={() => onAdvance(r)}>Mark approved &amp; start rollout</DropdownMenuItem>}
+                          {!readOnly && (r.status === "rollout" || r.status === "canary") && <DropdownMenuItem onSelect={() => onAdvance(r)}>Promote to next stage</DropdownMenuItem>}
                           {(r.status === "shipped" || r.status === "halted" || r.status === "paused") && (
                             <DropdownMenuItem disabled>
                               <RefreshCwIcon /> No actions available

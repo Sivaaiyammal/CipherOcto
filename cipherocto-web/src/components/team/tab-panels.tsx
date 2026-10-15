@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils"
 const card = "overflow-hidden rounded-2xl bg-card shadow-[var(--shadow-1)]"
 const th = "px-5 py-3 text-[11px] font-bold tracking-[0.04em] text-muted-foreground uppercase"
 
-export function InvitesPanel({ invites, onResend, onRevoke }: { invites: Invite[]; onResend: (i: Invite) => void; onRevoke: (i: Invite) => void }) {
+export function InvitesPanel({ invites, onResend, onRevoke, readOnly = false }: { invites: Invite[]; onResend: (i: Invite) => void; onRevoke: (i: Invite) => void; readOnly?: boolean }) {
   return (
     <section className={card}>
       <div className="overflow-x-auto">
@@ -42,10 +42,10 @@ export function InvitesPanel({ invites, onResend, onRevoke }: { invites: Invite[
                   {ageLabel(i.sentMin)} · expires in {i.expiresDays}d
                 </td>
                 <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                  <button type="button" onClick={() => onResend(i)} className="rounded-lg px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-foreground/[0.06]">
+                  <button type="button" disabled={readOnly} onClick={() => onResend(i)} className="disabled:cursor-not-allowed disabled:opacity-40 rounded-lg px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-foreground/[0.06]">
                     Resend
                   </button>
-                  <button type="button" onClick={() => onRevoke(i)} className="rounded-lg px-2.5 py-1 text-xs font-semibold text-destructive hover:bg-pink-surface">
+                  <button type="button" disabled={readOnly} onClick={() => onRevoke(i)} className="disabled:cursor-not-allowed disabled:opacity-40 rounded-lg px-2.5 py-1 text-xs font-semibold text-destructive hover:bg-pink-surface">
                     Revoke
                   </button>
                 </td>
@@ -65,7 +65,7 @@ export function InvitesPanel({ invites, onResend, onRevoke }: { invites: Invite[
   )
 }
 
-export function ServicesPanel({ services, onRotate }: { services: ServiceAccount[]; onRotate: (s: ServiceAccount) => void }) {
+export function ServicesPanel({ services, onRotate, readOnly = false }: { services: ServiceAccount[]; onRotate: (s: ServiceAccount) => void; readOnly?: boolean }) {
   return (
     <section className={card}>
       <div className="overflow-x-auto">
@@ -100,8 +100,8 @@ export function ServicesPanel({ services, onRotate }: { services: ServiceAccount
                 <td className="px-5 py-3.5 text-right">
                   <button
                     type="button"
-                    onClick={() => onRotate(s)}
-                    className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-foreground/[0.06]"
+                    disabled={readOnly} onClick={() => onRotate(s)}
+                    className="disabled:cursor-not-allowed disabled:opacity-40 inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-foreground/[0.06]"
                   >
                     <RefreshCwIcon className="size-3.5" />
                     Rotate key

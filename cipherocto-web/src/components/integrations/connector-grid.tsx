@@ -62,7 +62,9 @@ export function ConnectorGrid({
   onTest,
   onConfigure,
   onTogglePause,
+  readOnly = false,
 }: {
+  readOnly?: boolean
   integrations: Integration[]
   tests: Record<string, TestState>
   onTest: (i: Integration) => void
@@ -240,7 +242,7 @@ export function ConnectorGrid({
                   </p>
                   <div className="flex items-center gap-2">
                     {paused && (
-                      <button type="button" onClick={() => onTogglePause(i)} className="rounded-lg bg-mint-border px-3 py-1.5 text-[13px] font-semibold text-mint hover:opacity-90">
+                      <button type="button" disabled={readOnly} onClick={() => onTogglePause(i)} className="disabled:cursor-not-allowed disabled:opacity-40 rounded-lg bg-mint-border px-3 py-1.5 text-[13px] font-semibold text-mint hover:opacity-90">
                         Resume
                       </button>
                     )}
@@ -252,7 +254,7 @@ export function ConnectorGrid({
                     >
                       {i.testLabel}
                     </button>
-                    <button type="button" onClick={() => onConfigure(i)} className="rounded-lg bg-primary px-3 py-1.5 text-[13px] font-semibold text-primary-foreground hover:bg-primary/90">
+                    <button type="button" disabled={readOnly} onClick={() => onConfigure(i)} className="disabled:cursor-not-allowed disabled:opacity-40 rounded-lg bg-primary px-3 py-1.5 text-[13px] font-semibold text-primary-foreground hover:bg-primary/90">
                       {i.configLabel}
                     </button>
                   </div>

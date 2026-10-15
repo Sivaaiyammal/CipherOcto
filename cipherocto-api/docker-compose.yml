@@ -1,0 +1,41 @@
+# Local / VPS stack: MongoDB + the API. Put Nginx (TLS) in front of the API.
+#   cp .env.example .env   # set SEED_ADMIN_*, WEB_ORIGINS
+#   docker compose up -d --build
+#
+# MongoDB is not published to the host; only the API can reach it. If you expose it,
+# enable authentication first.
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:4000:4000"
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "4000"
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB: cipherocto
+      WEB_ORIGINS: ${WEB_ORIGINS:?set WEB_ORIGINS to your dashboard origin}
+      # Behind Nginx terminating TLS:
+      TRUST_PROXY: "true"
+      COOKIE_SECURE: "true"
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+
+volumes:
+  mongo-data:

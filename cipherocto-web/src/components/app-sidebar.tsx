@@ -11,11 +11,14 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/data/auth-context"
 import { NAV_ITEMS } from "@/lib/navigation"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state, setOpen } = useSidebar()
   const collapsed = state === "collapsed"
+  const { can } = useAuth()
+  const items = NAV_ITEMS.filter((item) => can(item.permission))
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -42,7 +45,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={NAV_ITEMS} />
+        <NavMain items={items} />
       </SidebarContent>
       <SidebarFooter className="gap-4 p-4 group-data-[collapsible=icon]:px-2">
         <SidebarOrgFooter />

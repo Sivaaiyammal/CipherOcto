@@ -22,7 +22,9 @@ export function WebhooksPanel({
   onRotate,
   onTogglePause,
   onDelete,
+  readOnly = false,
 }: {
+  readOnly?: boolean
   webhooks: Webhook[]
   testing: Set<string>
   onNew: () => void
@@ -56,7 +58,7 @@ export function WebhooksPanel({
             Real-time outbound HTTPS push notifications with HMAC SHA-256 integrity verification signatures.
           </p>
         </div>
-        <button type="button" onClick={onNew} className="flex items-center gap-1.5 self-start rounded-xl bg-foreground/[0.06] px-4 py-2 text-[13px] font-semibold text-foreground shadow-[var(--shadow-1)] hover:bg-foreground/[0.1] sm:self-auto">
+        <button type="button" disabled={readOnly} onClick={onNew} className="disabled:cursor-not-allowed disabled:opacity-40 flex items-center gap-1.5 self-start rounded-xl bg-foreground/[0.06] px-4 py-2 text-[13px] font-semibold text-foreground shadow-[var(--shadow-1)] hover:bg-foreground/[0.1] sm:self-auto">
           <Link2Icon className="size-4" />
           New Webhook Endpoint
         </button>
@@ -123,7 +125,7 @@ export function WebhooksPanel({
                     </button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button type="button" aria-label={`More actions for ${w.name}`} className="rounded-lg p-1 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground">
+                        <button type="button" disabled={readOnly} aria-label={`More actions for ${w.name}`} className="rounded-lg p-1 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground">
                           <MoreVerticalIcon className="size-4" />
                         </button>
                       </DropdownMenuTrigger>

@@ -31,6 +31,7 @@ import { getAppDetail } from "@/data/app-details"
 import { getCatalog } from "@/data/app-insights"
 import { APP_QUOTA, type PortfolioApp, type ReleaseStatus } from "@/data/apps"
 import { useApps } from "@/data/apps-context"
+import { useAuth } from "@/data/auth-context"
 import { exportAppsCsv } from "@/lib/export-apps-csv"
 import { cn } from "@/lib/utils"
 
@@ -94,6 +95,8 @@ export default function AppsPage() {
 
   const promote = (app: PortfolioApp) => promoteApp(app.id)
   const slotsLeft = APP_QUOTA - apps.length
+  const { can } = useAuth()
+  const canRegister = can("apps:write")
 
   return (
     <>
@@ -140,11 +143,12 @@ export default function AppsPage() {
             </span>
           </Button>
           <Button
-            asChild={slotsLeft > 0}
+            asChild={slotsLeft > 0 && canRegister}
             className="h-10 rounded-xl px-4 text-[13px] font-semibold shadow-[var(--shadow-2)] active:scale-[0.98]"
-            disabled={slotsLeft <= 0}
+            disabled={slotsLeft <= 0 || !canRegister}
+            title={canRegister ? undefined : "Your role can't register apps."}
           >
-            {slotsLeft > 0 ? (
+            {slotsLeft > 0 && canRegister ? (
               <Link to="/apps/new">
                 <CirclePlusIcon />
                 Register New App
@@ -295,7 +299,7 @@ export default function AppsPage() {
             {visible.map((app) => (
               <AppCard key={app.id} app={app} onPromote={promote} />
             ))}
-            <RegisterAppCard slotsLeft={slotsLeft} />
+            <RegisterAppCard slotsLeft={slotsLeft} locked={!canRegister} />
           </div>
         ) : (
           <AppsListView apps={visible} />

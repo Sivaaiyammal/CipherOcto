@@ -12,7 +12,9 @@ export function Spotlight({
   onResume,
   onHalt,
   onPromote,
+  readOnly = false,
 }: {
+  readOnly?: boolean
   release: Release
   stage: number
   onPause: () => void
@@ -60,14 +62,14 @@ export function Spotlight({
 
         <div className="flex flex-wrap items-center gap-2">
           {paused ? (
-            <button type="button" onClick={onResume} className="flex h-10 items-center gap-1.5 rounded-lg bg-foreground/[0.05] px-3.5 text-[13px] font-semibold text-foreground hover:bg-foreground/[0.09]">
+            <button type="button" disabled={readOnly} onClick={onResume} className="disabled:opacity-50 flex h-10 items-center gap-1.5 rounded-lg bg-foreground/[0.05] px-3.5 text-[13px] font-semibold text-foreground hover:bg-foreground/[0.09]">
               <PlayCircleIcon className="size-4" />
               Resume Rollout
             </button>
           ) : (
             <button
               type="button"
-              disabled={halted || done}
+              disabled={halted || done || readOnly}
               onClick={onPause}
               className="flex h-10 items-center gap-1.5 rounded-lg bg-foreground/[0.05] px-3.5 text-[13px] font-semibold text-foreground hover:bg-foreground/[0.09] disabled:opacity-50"
             >
@@ -77,7 +79,7 @@ export function Spotlight({
           )}
           <button
             type="button"
-            disabled={halted || done}
+            disabled={halted || done || readOnly}
             onClick={onHalt}
             className="flex h-10 items-center gap-1.5 rounded-lg bg-pink-hover px-3.5 text-[13px] font-semibold text-destructive hover:bg-pink-border disabled:opacity-50"
           >
@@ -86,7 +88,7 @@ export function Spotlight({
           </button>
           <button
             type="button"
-            disabled={halted || paused || done || !next}
+            disabled={halted || paused || done || !next || readOnly}
             onClick={onPromote}
             className="flex h-10 items-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-[var(--shadow-1)] hover:bg-primary/90 disabled:opacity-50"
           >

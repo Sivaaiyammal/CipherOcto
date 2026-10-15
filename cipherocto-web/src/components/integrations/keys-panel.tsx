@@ -10,7 +10,7 @@ const ENV_TONE: Record<ApiKey["env"], string> = {
   Automations: "bg-neutral-strong text-foreground",
 }
 
-export function KeysPanel({ keys, onGenerate, onRotate }: { keys: ApiKey[]; onGenerate: () => void; onRotate: (k: ApiKey) => void }) {
+export function KeysPanel({ keys, onGenerate, onRotate, readOnly = false }: { keys: ApiKey[]; onGenerate: () => void; onRotate: (k: ApiKey) => void; readOnly?: boolean }) {
   const [copied, setCopied] = React.useState<string | null>(null)
   const copy = async (k: ApiKey) => {
     try {
@@ -29,7 +29,7 @@ export function KeysPanel({ keys, onGenerate, onRotate }: { keys: ApiKey[]; onGe
           <h3 className="text-lg font-semibold text-foreground">Platform API Access Keys</h3>
           <p className="text-[13px] text-muted-foreground">Server SDK tokens for remote config overrides, entitlement checks, and automated CI pipelines.</p>
         </div>
-        <button type="button" onClick={onGenerate} className="flex shrink-0 items-center gap-1 self-start rounded-lg bg-primary px-3.5 py-1.5 text-[13px] font-semibold text-primary-foreground shadow-[var(--shadow-1)] hover:bg-primary/90 sm:self-auto">
+        <button type="button" disabled={readOnly} onClick={onGenerate} className="disabled:cursor-not-allowed disabled:opacity-40 flex shrink-0 items-center gap-1 self-start rounded-lg bg-primary px-3.5 py-1.5 text-[13px] font-semibold text-primary-foreground shadow-[var(--shadow-1)] hover:bg-primary/90 sm:self-auto">
           <PlusIcon className="size-4" />
           Generate Key
         </button>
@@ -59,7 +59,7 @@ export function KeysPanel({ keys, onGenerate, onRotate }: { keys: ApiKey[]; onGe
             </div>
             <div className="flex shrink-0 items-center justify-between gap-1 text-xs text-muted-foreground sm:flex-col sm:items-end">
               <span>{k.used}</span>
-              <button type="button" onClick={() => onRotate(k)} className="text-[11px] font-bold text-tertiary hover:underline">
+              <button type="button" disabled={readOnly} onClick={() => onRotate(k)} className="disabled:cursor-not-allowed disabled:opacity-40 text-[11px] font-bold text-tertiary hover:underline">
                 Rotate Key
               </button>
             </div>

@@ -6,6 +6,9 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Same-origin /api keeps the HttpOnly session cookie first-party in dev and preview.
+  server: { proxy: { '/api': 'http://127.0.0.1:4000' } },
+  preview: { proxy: { '/api': 'http://127.0.0.1:4000' } },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

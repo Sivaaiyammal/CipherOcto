@@ -7,13 +7,16 @@ import { BuildSheet, CompareSheet, CreateReleaseSheet, HaltSheet, RulesSheet } f
 import { ReleaseTable } from "@/components/releases/release-table"
 import { Spotlight } from "@/components/releases/spotlight"
 import { SEED_EVENTS, SEED_RELEASES, SEED_RULES, SPOTLIGHT_ID, STAGES, initial, type Release, type ReleaseEvent, type Tone, type TripRule } from "@/data/releases"
+import { useAuth } from "@/data/auth-context"
 import { downloadFile, toCsv } from "@/lib/download"
 
 const TONES: Tone[] = ["mint", "lavender", "blue", "amber", "pink"]
 const headerBtn =
-  "flex h-10 items-center gap-1.5 rounded-lg bg-card px-3.5 text-[13px] font-semibold text-foreground shadow-[var(--shadow-1)] hover:bg-foreground/[0.04]"
+  "flex h-10 items-center gap-1.5 rounded-lg bg-card px-3.5 text-[13px] font-semibold text-foreground shadow-[var(--shadow-1)] hover:bg-foreground/[0.04] disabled:cursor-not-allowed disabled:opacity-40"
 
 export default function ReleasesPage() {
+  const { can } = useAuth()
+  const canPublish = can("releases:publish")
   const [releases, setReleases] = React.useState<Release[]>(SEED_RELEASES)
   const [stage, setStage] = React.useState(1)
   const [rules, setRules] = React.useState<TripRule[]>(SEED_RULES)
@@ -94,14 +97,15 @@ export default function ReleasesPage() {
               setRulesOpen(true)
             }}
             className={headerBtn}
+            disabled={!canPublish}
           >
             <SlidersHorizontalIcon className="size-4" />
             Rollout Rules
           </button>
           <button
             type="button"
-            onClick={() => setCreateOpen(true)}
-            className="flex h-10 items-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-[var(--shadow-1)] hover:bg-primary/90"
+            disabled={!canPublish} onClick={() => setCreateOpen(true)}
+            className="disabled:cursor-not-allowed disabled:opacity-40 flex h-10 items-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-[var(--shadow-1)] hover:bg-primary/90"
           >
             <PlusCircleIcon className="size-4" />
             Create New Release
@@ -112,6 +116,7 @@ export default function ReleasesPage() {
       <ReleaseKpis releases={releases} rules={rules} rollbacks={rollbacks} />
 
       <Spotlight
+        readOnly={!canPublish}
         release={spotlight}
         stage={stage}
         onPause={() => {
@@ -127,6 +132,7 @@ export default function ReleasesPage() {
       />
 
       <ReleaseTable
+        readOnly={!canPublish}
         releases={releases}
         onInspect={(r) => setBuild({ release: r, mode: "inspect", open: true })}
         onLogs={(r) => setBuild({ release: r, mode: "logs", open: true })}
@@ -139,6 +145,7 @@ export default function ReleasesPage() {
 
       <div className="grid grid-cols-1 gap-6 px-4 lg:px-6 @5xl/main:grid-cols-2">
         <TripwirePanel
+          readOnly={!canPublish}
           rules={rules}
           onEdit={() => {
             setRulesKey((k) => k + 1)

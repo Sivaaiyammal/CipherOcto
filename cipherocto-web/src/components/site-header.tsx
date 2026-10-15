@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { currentUser } from "@/lib/current-user"
+import { useCurrentUser } from "@/lib/use-current-user"
 import { useApps } from "@/data/apps-context"
 import { useAuth } from "@/data/auth-context"
 import { findNavItem } from "@/lib/navigation"
@@ -170,7 +170,8 @@ function Notifications({ hasUnread = true }: { hasUnread?: boolean }) {
 }
 
 function UserMenu() {
-  const { session, signOut } = useAuth()
+  const { logout } = useAuth()
+  const currentUser = useCurrentUser()
   const navigate = useNavigate()
 
   return (
@@ -200,7 +201,7 @@ function UserMenu() {
       <DropdownMenuContent align="end" className="min-w-56">
         <DropdownMenuLabel className="font-normal">
           <div className="text-sm font-semibold">{currentUser.name}</div>
-          <div className="text-xs text-muted-foreground">{session?.email ?? currentUser.role}</div>
+          <div className="text-xs text-muted-foreground">{currentUser.email}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
@@ -218,8 +219,7 @@ function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={() => {
-            signOut()
-            navigate("/login", { replace: true })
+            void logout().then(() => navigate("/login", { replace: true }))
           }}
         >
           <LogOutIcon />

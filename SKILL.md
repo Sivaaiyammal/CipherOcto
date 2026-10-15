@@ -26,7 +26,7 @@ CipherOcto is initially an internal company tool, not a public multi-tenant SaaS
 
 1. Build reusable infrastructure once and integrate every new app through documented interfaces.
 2. Keep the management platform independent of individual apps' databases and technology stacks.
-3. Use PostgreSQL for CipherOcto's central management database.
+3. Use MongoDB for CipherOcto's central management database.
 4. Support PostgreSQL, MongoDB, MySQL, SQLite, and standalone applications in the app portfolio.
 5. Prefer a modular monolith over premature microservices.
 6. Keep business logic out of React components and database-specific logic out of shared domain services.
@@ -42,17 +42,19 @@ CipherOcto is initially an internal company tool, not a public multi-tenant SaaS
 - Frontend: React, TypeScript, Vite.
 - UI: Tailwind CSS and shadcn/ui.
 - Backend: Node.js and TypeScript with Fastify.
-- Database: PostgreSQL.
-- ORM: Prisma.
+- Database: MongoDB (Atlas or self-hosted).
+- ODM: Mongoose. MongoDB is schemaless, so enforce structure in Mongoose schemas and Zod, and own indexes and data fixes in versioned migrations (`src/db/migrate.ts`).
 - Validation: Zod, wired into Fastify via a type provider (for example `fastify-type-provider-zod`) so route schemas drive both validation and TypeScript types.
 - API documentation: OpenAPI generated from route schemas with `@fastify/swagger` and `@fastify/swagger-ui`.
-- Testing: Vitest and API integration tests using Fastify's `app.inject()`.
+- Testing: Vitest and API integration tests using Fastify's `app.inject()` against an embedded MongoDB (`mongodb-memory-server`); tests never touch a shared or production database.
 
 Fastify conventions:
 
 - Structure each domain module (apps, config, billing, finance, team) as an encapsulated Fastify plugin registered with a route prefix.
-- Share cross-cutting services (Prisma client, config, logger, auth) through decorators and plugins wrapped with `fastify-plugin` only when they must be visible to sibling plugins.
-- Use hooks (`onRequest`, `preHandler`) for authentication and authorization, and keep route handlers thin; business logic lives in service classes/functions.
+- Share cross-cutting services (database connection and models, config, logger, auth) through decorators and plugins wrapped with `fastify-plugin` only when they must be visible to sibling plugins.
+- Use hooks for authentication and authorization, and keep route handlers thin; business logic lives in service classes/functions. Run authorization guards in `onRequest` (before body parsing and validation) so anonymous callers always get 401 and learn nothing from validation errors.
+- Module layout: `src/modules/<domain>/` holds `*.routes.ts` (HTTP + Zod schemas), `*.service.ts` (business rules), `*.repository.ts` (the only files that import Mongoose) and `*.schemas.ts`. `src/services.ts` is the composition root that wires repositories into services; services never import Mongoose.
+- Never put the database connection string in logs, error messages, source control or docs; it lives only in the environment.
 - Use official plugins where available: `@fastify/jwt` or session auth, `@fastify/cors`, `@fastify/helmet`, `@fastify/rate-limit`, `@fastify/sensible`, `@fastify/env`.
 - Use a central error handler (`setErrorHandler`) to return a consistent error shape.
 - Build the app in a `buildApp()` factory separate from `listen()` so tests can create instances without binding a port.
@@ -232,9 +234,9 @@ Restrict salary information to authorized roles. Developers should not automatic
 
 ## 5. Database design guidelines
 
-Use a central PostgreSQL database for CipherOcto's own records.
+Use a central MongoDB database for CipherOcto's own records (one database per environment; never share a database with another project).
 
-Organize the schema around clear domains, including:
+Organize the collections around clear domains, including:
 
 - `apps`
 - `app_environments`
@@ -262,11 +264,11 @@ Organize the schema around clear domains, including:
 
 These are proposed domain names, not a requirement to create every table immediately.
 
-Model the relationships and uniqueness constraints carefully. Use decimal-safe representations for money, explicit currencies, timestamps, foreign keys, and indexes.
+Model the relationships and uniqueness constraints carefully: reference by id and enforce uniqueness with unique indexes. Use decimal-safe representations for money (`Decimal128` or integer minor units — never JavaScript floats), explicit currencies, timestamps, references, and indexes. Prefer TTL indexes for data with a natural lifetime (sessions, login throttling).
 
 Store provider-specific identifiers separately from internal IDs. Never use a purchase token as a public identifier.
 
-Use migrations for every schema change. Do not modify production schemas manually.
+Use migrations for every index or data-shape change. Do not modify production collections or indexes manually.
 
 Keep app-specific business tables in their own databases. CipherOcto should store the metadata and financial or operational summaries needed to manage those apps, not copy every app's business data into the central database.
 
@@ -311,7 +313,7 @@ For the Google Play webhook, verify the authenticity of the Pub/Sub push (OIDC t
 - Validate configuration values against a defined schema.
 - Record audit logs for configuration publishing, financial adjustments, and permission changes.
 - Use least-privilege service accounts.
-- Back up PostgreSQL and test restoration.
+- Back up MongoDB (Atlas snapshots or `mongodump`) and test restoration.
 - Avoid storing unnecessary personal information.
 - Never expose subscriber purchase tokens or sensitive employee information in general-purpose dashboard responses.
 
@@ -359,7 +361,7 @@ Do not hardcode production credentials, product IDs, financial values, or app-sp
 - Repository structure.
 - Authentication and roles.
 - App registry.
-- PostgreSQL schema.
+- MongoDB collections, indexes and migrations.
 - Central dashboard shell.
 - Audit logging.
 

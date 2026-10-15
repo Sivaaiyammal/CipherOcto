@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils"
 
 // ── List ───────────────────────────────────────────────────────────────────
 
-export function ListView({ tasks, onOpen, onStatus }: { tasks: Task[]; onOpen: (t: Task) => void; onStatus: (id: string, s: Status) => void }) {
+export function ListView({ tasks, onOpen, onStatus, readOnly = false }: { tasks: Task[]; onOpen: (t: Task) => void; onStatus: (id: string, s: Status) => void; readOnly?: boolean }) {
   return (
     <div className="px-4 lg:px-6">
       <div className="overflow-x-auto rounded-2xl bg-card p-2 shadow-[var(--shadow-1)]">
@@ -47,6 +47,7 @@ export function ListView({ tasks, onOpen, onStatus }: { tasks: Task[]; onOpen: (
                 <td className="px-3 py-3">
                   <select
                     value={t.status}
+                    disabled={readOnly}
                     aria-label={`Status for ${t.title}`}
                     onChange={(e) => onStatus(t.id, e.target.value as Status)}
                     className="h-8 rounded-lg bg-background px-2 text-xs font-semibold text-foreground outline-none focus:ring-2 focus:ring-ring/20"

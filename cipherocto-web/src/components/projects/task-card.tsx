@@ -71,7 +71,9 @@ export function TaskCard({
   onDragStart,
   onDragEnd,
   dragging,
+  readOnly = false,
 }: {
+  readOnly?: boolean
   task: Task
   compact: boolean
   onOpen: (t: Task) => void
@@ -86,7 +88,7 @@ export function TaskCard({
 
   return (
     <article
-      draggable
+      draggable={!readOnly}
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = "move"
         e.dataTransfer.setData("text/plain", task.id)
@@ -180,7 +182,7 @@ export function TaskCard({
         </div>
       </div>
 
-      {next && (
+      {next && !readOnly && (
         <button
           type="button"
           onClick={() => onAdvance(task)}

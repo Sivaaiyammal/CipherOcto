@@ -21,7 +21,9 @@ export function TaskSheet({
   defaultProject,
   onSave,
   onDelete,
+  readOnly = false,
 }: {
+  readOnly?: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
   task: Task | null
@@ -116,6 +118,7 @@ export function TaskSheet({
           {task ? (
             <Button
               variant="ghost"
+              disabled={readOnly}
               className="text-destructive hover:text-destructive"
               onClick={() => {
                 onDelete(task.id)
@@ -131,7 +134,7 @@ export function TaskSheet({
             <Button variant="ghost" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={save}>{task ? "Save changes" : "Create task"}</Button>
+            <Button disabled={readOnly} onClick={save}>{task ? "Save changes" : "Create task"}</Button>
           </div>
         </SheetFooter>
       </SheetContent>

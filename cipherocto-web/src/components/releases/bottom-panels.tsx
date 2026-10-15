@@ -10,7 +10,7 @@ const RULE_ICON: Record<string, { icon: typeof ZapIcon; tone: string }> = {
   page: { icon: BellRingIcon, tone: "bg-neutral-strong text-foreground" },
 }
 
-export function TripwirePanel({ rules, onEdit }: { rules: TripRule[]; onEdit: () => void }) {
+export function TripwirePanel({ rules, onEdit, readOnly = false }: { rules: TripRule[]; onEdit: () => void; readOnly?: boolean }) {
   const armed = rules.filter((r) => r.enabled).length
   const shown = rules.slice(0, 3)
   return (
@@ -55,7 +55,7 @@ export function TripwirePanel({ rules, onEdit }: { rules: TripRule[]; onEdit: ()
           <span className="size-2 rounded-full bg-mint" />
           Synchronized with Sentry, Bugsnag &amp; Google RTDN
         </span>
-        <button type="button" onClick={onEdit} className="font-semibold text-foreground hover:underline">
+        <button type="button" disabled={readOnly} onClick={onEdit} className="disabled:cursor-not-allowed disabled:opacity-40 font-semibold text-foreground hover:underline">
           Edit Tripwire Rules
         </button>
       </p>

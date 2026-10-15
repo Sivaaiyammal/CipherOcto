@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/data/auth-context"
+import { ApiError } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
 const FEATURES = [
@@ -40,11 +41,6 @@ const FEATURES = [
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-// One-click demo access until the real auth backend exists.
-// Set VITE_DEMO_LOGIN=false to hide it.
-const DEMO_LOGIN_ENABLED = import.meta.env.VITE_DEMO_LOGIN !== "false"
-const DEMO_EMAIL = "demo@cipherocto.app"
-
 function GoogleMark() {
   return (
     <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
@@ -59,7 +55,7 @@ function GoogleMark() {
 type FieldErrors = { email?: string; password?: string; form?: string }
 
 export default function LoginPage() {
-  const { session, signIn } = useAuth()
+  const { status, login, loginDemo, demo } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: string } | null)?.from ?? "/"
@@ -71,20 +67,23 @@ export default function LoginPage() {
   const [errors, setErrors] = React.useState<FieldErrors>({})
   const [submitting, setSubmitting] = React.useState(false)
   const [notice, setNotice] = React.useState<string | null>(null)
+  const [demoRole, setDemoRole] = React.useState("admin")
   const [year] = React.useState(() => new Date().getFullYear())
 
-  if (session) return <Navigate to={from} replace />
+  if (status === "authenticated") return <Navigate to={from} replace />
 
   const validate = (): FieldErrors => {
     const next: FieldErrors = {}
     if (!email.trim()) next.email = "Enter your work email."
     else if (!EMAIL_RE.test(email.trim())) next.email = "That doesn't look like a valid email."
     if (!password) next.password = "Enter your password."
-    else if (password.length < 8) next.password = "Passwords are at least 8 characters."
     return next
   }
 
-  const onSubmit = (event: React.FormEvent) => {
+  const message = (err: unknown) =>
+    err instanceof ApiError ? err.message : "Something went wrong. Please try again."
+
+  const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setNotice(null)
     const next = validate()
@@ -92,21 +91,28 @@ export default function LoginPage() {
     if (Object.keys(next).length) return
 
     setSubmitting(true)
-    // Mock round-trip until the auth API exists
-    window.setTimeout(() => {
-      signIn(email.trim().toLowerCase(), remember)
+    try {
+      await login(email.trim().toLowerCase(), password, remember)
       navigate(from, { replace: true })
-    }, 700)
+    } catch (err) {
+      setErrors({ form: message(err) })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const signInAsDemo = () => {
+  const signInAsDemo = async () => {
     setNotice(null)
     setErrors({})
     setSubmitting(true)
-    window.setTimeout(() => {
-      signIn(DEMO_EMAIL, remember)
+    try {
+      await loginDemo(demoRole, remember)
       navigate(from, { replace: true })
-    }, 400)
+    } catch (err) {
+      setErrors({ form: message(err) })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const ssoNotConnected = (provider: string) =>
@@ -181,12 +187,30 @@ export default function LoginPage() {
             Sign in to your CipherOcto workspace.
           </p>
 
-          {DEMO_LOGIN_ENABLED && (
+          {demo.enabled && (
+            <>
+            <div className="mt-7 flex items-center gap-2 text-[13px]">
+              <label htmlFor="demo-role" className="shrink-0 font-semibold text-foreground">
+                Demo as
+              </label>
+              <select
+                id="demo-role"
+                value={demoRole}
+                onChange={(e) => setDemoRole(e.target.value)}
+                className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-card px-2 text-[13px] outline-none focus:ring-2 focus:ring-ring/20"
+              >
+                {demo.roles.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <button
               type="button"
-              onClick={signInAsDemo}
+              onClick={() => void signInAsDemo()}
               disabled={submitting}
-              className="group mt-7 flex w-full items-center gap-3 rounded-xl border border-mint-border bg-mint-surface p-3 text-left transition-colors hover:bg-mint-hover disabled:pointer-events-none disabled:opacity-70"
+              className="group mt-2 flex w-full items-center gap-3 rounded-xl border border-mint-border bg-mint-surface p-3 text-left transition-colors hover:bg-mint-hover disabled:pointer-events-none disabled:opacity-70"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-stream-mrr text-white">
                 {submitting ? <Loader2Icon className="size-5 animate-spin" /> : <ZapIcon className="size-5" />}
@@ -194,14 +218,15 @@ export default function LoginPage() {
               <span className="min-w-0 flex-1 leading-tight">
                 <span className="block text-sm font-bold text-mint">One-click demo login</span>
                 <span className="block truncate text-xs text-muted-foreground">
-                  Explore with sample data as {DEMO_EMAIL}
+                  Explore the workspace with this role's permissions
                 </span>
               </span>
               <ArrowRightIcon className="size-4 shrink-0 text-mint transition-transform group-hover:translate-x-0.5" />
             </button>
+            </>
           )}
 
-          <div className={cn("grid grid-cols-2 gap-2.5", DEMO_LOGIN_ENABLED ? "mt-4" : "mt-7")}>
+          <div className={cn("grid grid-cols-2 gap-2.5", demo.enabled ? "mt-4" : "mt-7")}>
             <Button
               type="button"
               variant="outline"
@@ -297,6 +322,12 @@ export default function LoginPage() {
               />
               Keep me signed in for 30 days
             </label>
+
+            {errors.form && (
+              <p role="alert" className="rounded-[10px] bg-pink-surface px-3 py-2 text-xs font-medium text-destructive">
+                {errors.form}
+              </p>
+            )}
 
             {notice && (
               <p role="status" className="rounded-[10px] bg-amber-surface px-3 py-2 text-xs font-medium text-amber">

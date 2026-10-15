@@ -9,7 +9,7 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { currentUser } from "@/lib/current-user"
+import { useCurrentUser } from "@/lib/use-current-user"
 import { cn } from "@/lib/utils"
 
 const actionBase =
@@ -24,6 +24,7 @@ export function WelcomeBanner({
   liveApps: number
   periodLabel: string
 }) {
+  const currentUser = useCurrentUser()
   return (
     <section className="flex flex-col gap-5 px-4 lg:px-6 @3xl/main:flex-row @3xl/main:items-start @3xl/main:justify-between">
       <div className="max-w-md">

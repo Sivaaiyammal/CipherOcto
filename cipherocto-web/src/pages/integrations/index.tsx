@@ -16,6 +16,7 @@ import {
   type Provider,
   type Webhook,
 } from "@/data/integrations"
+import { useAuth } from "@/data/auth-context"
 import { downloadFile } from "@/lib/download"
 import { hashString } from "@/lib/seeded-random"
 
@@ -23,6 +24,8 @@ import { hashString } from "@/lib/seeded-random"
 const roundTrip = (id: string, n: number) => 12 + (hashString(`${id}:${n}`) % 38)
 
 export default function IntegrationsPage() {
+  const { can } = useAuth()
+  const canManage = can("integrations:manage")
   const [integrations, setIntegrations] = React.useState<Integration[]>(SEED_INTEGRATIONS)
   const [webhooks, setWebhooks] = React.useState<Webhook[]>(SEED_WEBHOOKS)
   const [keys, setKeys] = React.useState<ApiKey[]>(SEED_KEYS)
@@ -132,8 +135,8 @@ export default function IntegrationsPage() {
           </button>
           <button
             type="button"
-            onClick={() => setConnectOpen(true)}
-            className="flex h-10 items-center gap-1.5 rounded-xl bg-primary px-5 text-[13px] font-semibold text-primary-foreground shadow-[var(--shadow-2)] hover:bg-primary/90"
+            disabled={!canManage} onClick={() => setConnectOpen(true)}
+            className="disabled:cursor-not-allowed disabled:opacity-40 flex h-10 items-center gap-1.5 rounded-xl bg-primary px-5 text-[13px] font-semibold text-primary-foreground shadow-[var(--shadow-2)] hover:bg-primary/90"
           >
             <PlusIcon className="size-4" />
             Connect New Integration
@@ -153,6 +156,7 @@ export default function IntegrationsPage() {
       <IntegrationKpis integrations={integrations} webhooks={webhooks} keys={keys} />
 
       <ConnectorGrid
+        readOnly={!canManage}
         integrations={integrations}
         tests={tests}
         onTest={testIntegration}
@@ -166,6 +170,7 @@ export default function IntegrationsPage() {
       />
 
       <WebhooksPanel
+        readOnly={!canManage}
         webhooks={webhooks}
         testing={testing}
         onNew={() => setWebhookOpen(true)}
@@ -179,6 +184,7 @@ export default function IntegrationsPage() {
       <div className="grid grid-cols-1 gap-5 px-4 lg:px-6 @5xl/main:grid-cols-3">
         <div className="min-w-0 @5xl/main:col-span-2">
           <KeysPanel
+            readOnly={!canManage}
             keys={keys}
             onGenerate={() => setKeyOpen(true)}
             onRotate={(k) =>

@@ -45,7 +45,9 @@ export function Roster({
   onEdit,
   onResetAuth,
   onRemove,
+  readOnly = false,
 }: {
+  readOnly?: boolean
   members: Member[]
   total: number
   onEdit: (m: Member) => void
@@ -145,12 +147,13 @@ export function Roster({
                 </td>
                 <td className="px-6 py-4 text-right">
                   <span className="inline-flex items-center gap-1">
-                    <button type="button" title="Edit Permissions" aria-label={`Edit permissions for ${m.name}`} onClick={() => onEdit(m)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground">
+                    <button type="button" title="Edit Permissions" aria-label={`Edit permissions for ${m.name}`} disabled={readOnly} onClick={() => onEdit(m)} className="disabled:cursor-not-allowed disabled:opacity-40 rounded-lg p-1.5 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground">
                       <SlidersHorizontalIcon className="size-[18px]" />
                     </button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button type="button" title="More Options" aria-label={`More options for ${m.name}`} className="rounded-lg p-1.5 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground">
+                        <button type="button" title="More Options"
+                          disabled={readOnly} aria-label={`More options for ${m.name}`} className="rounded-lg p-1.5 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground">
                           <MoreVerticalIcon className="size-[18px]" />
                         </button>
                       </DropdownMenuTrigger>

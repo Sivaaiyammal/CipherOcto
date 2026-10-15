@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { PEOPLE, PROJECTS, SEED_TASKS, SPRINT, STATUS_META, type ProjectKey, type Status, type Task } from "@/data/projects"
+import { useAuth } from "@/data/auth-context"
 import { downloadFile, toCsv } from "@/lib/download"
 import { cn } from "@/lib/utils"
 
@@ -47,6 +48,8 @@ const triggerBtn =
   "flex h-10 items-center gap-1.5 rounded-xl bg-card px-3.5 text-[13px] font-semibold text-foreground shadow-[var(--shadow-1)] hover:bg-foreground/[0.04]"
 
 export default function ProjectsPage() {
+  const { can } = useAuth()
+  const canWrite = can("projects:write")
   const [tasks, setTasks] = React.useState<Task[]>(SEED_TASKS)
   const [view, setView] = React.useState<View>("kanban")
   const [project, setProject] = React.useState<ProjectKey | "all">("all")
@@ -196,8 +199,8 @@ export default function ProjectsPage() {
 
           <button
             type="button"
-            onClick={() => openEditor(null)}
-            className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-[var(--shadow-1)] hover:bg-primary/90"
+            disabled={!canWrite} onClick={() => openEditor(null)}
+            className="disabled:cursor-not-allowed disabled:opacity-40 flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-[13px] font-semibold text-primary-foreground shadow-[var(--shadow-1)] hover:bg-primary/90"
           >
             <PlusCircleIcon className="size-4" />
             New Task / Epic
@@ -275,9 +278,9 @@ export default function ProjectsPage() {
       </div>
 
       {view === "kanban" && (
-        <Board tasks={visible} grouping={grouping} compact={compact} onOpen={(t) => openEditor(t)} onAdd={(s) => openEditor(null, s)} onMove={move} />
+        <Board readOnly={!canWrite} tasks={visible} grouping={grouping} compact={compact} onOpen={(t) => openEditor(t)} onAdd={(s) => openEditor(null, s)} onMove={move} />
       )}
-      {view === "list" && <ListView tasks={visible} onOpen={(t) => openEditor(t)} onStatus={move} />}
+      {view === "list" && <ListView readOnly={!canWrite} tasks={visible} onOpen={(t) => openEditor(t)} onStatus={move} />}
       {view === "gantt" && <GanttView tasks={visible} onOpen={(t) => openEditor(t)} />}
       {view === "roadmap" && <RoadmapView project={project} tasks={tasks} />}
 
@@ -330,6 +333,7 @@ export default function ProjectsPage() {
       </div>
 
       <TaskSheet
+        readOnly={!canWrite}
         key={editor.key}
         open={editor.open}
         onOpenChange={(open) => setEditor((e) => ({ ...e, open }))}

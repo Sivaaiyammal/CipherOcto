@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useApps } from "@/data/apps-context"
+import { useAuth } from "@/data/auth-context"
 import {
   KIND_LABEL,
   SEED_PAYWALLS,
@@ -38,6 +39,8 @@ const actionBtn =
   "flex h-10 items-center gap-1.5 rounded-xl bg-foreground/[0.04] px-3.5 text-[13px] font-semibold text-foreground shadow-[var(--shadow-1)] hover:bg-foreground/[0.08]"
 
 export default function SubscriptionsPage() {
+  const { can } = useAuth()
+  const canWrite = can("subscriptions:write")
   const { apps } = useApps()
   const [searchParams, setSearchParams] = useSearchParams()
   const appParam = searchParams.get("app")
@@ -154,8 +157,8 @@ export default function SubscriptionsPage() {
           </button>
           <button
             type="button"
-            onClick={() => openEditor("create", null)}
-            className="flex h-10 items-center gap-2 rounded-xl bg-secondary px-4 text-[13px] font-semibold text-secondary-foreground shadow-[var(--shadow-1)] hover:bg-secondary/90"
+            disabled={!canWrite} onClick={() => openEditor("create", null)}
+            className="disabled:cursor-not-allowed disabled:opacity-40 flex h-10 items-center gap-2 rounded-xl bg-secondary px-4 text-[13px] font-semibold text-secondary-foreground shadow-[var(--shadow-1)] hover:bg-secondary/90"
           >
             <PlusIcon className="size-4" />
             Create Product SKU
@@ -168,13 +171,14 @@ export default function SubscriptionsPage() {
       <div className="grid grid-cols-1 items-start gap-6 px-4 lg:px-6 @5xl/main:grid-cols-12">
         <div className="flex min-w-0 flex-col gap-6 @5xl/main:col-span-8">
           <ProductTable
+            readOnly={!canWrite}
             key={scope}
             products={scoped}
             apps={apps}
             onEdit={(p) => openEditor("edit", p)}
             onPriceTest={(p) => openEditor("price-test", p)}
           />
-          <PaywallVariants variants={paywalls} onPromote={promote} />
+          <PaywallVariants readOnly={!canWrite} variants={paywalls} onPromote={promote} />
         </div>
         <div className="flex min-w-0 flex-col gap-6 @5xl/main:col-span-4">
           <StoreGateways events={events} onTestPing={() => pushEvent({ type: "TEST_PING", label: "Ack 200 · 3/3 gateways" })} />
